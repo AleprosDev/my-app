@@ -7,7 +7,7 @@ type SongItemProps = {
 
 const SongItem: React.FC<SongItemProps> = ({ song }) => {
   return (
-    <div className="flex items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
+    <div className="flex items-center p-3 bg-gray-50 rounded-md hover:bg-gray-200 transition-colors">
       <div className="h-12 w-12 flex-shrink-0 bg-gray-300 rounded overflow-hidden">
         <img
           src={song.coverUrl || `/placeholder.svg?height=48&width=48`}
