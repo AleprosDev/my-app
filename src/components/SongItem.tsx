@@ -3,11 +3,12 @@ import type { Song } from "../types"
 
 type SongItemProps = {
   song: Song
+  onClick?: () => void
 }
 
-const SongItem: React.FC<SongItemProps> = ({ song }) => {
+const SongItem: React.FC<SongItemProps> = ({ song, onClick }) => {
   return (
-    <div className="flex items-center p-3 bg-gray-50 rounded-md hover:bg-gray-200 transition-colors">
+    <div className="flex items-center p-3 bg-gray-50 rounded-md hover:bg-gray-200 transition-colors" onClick={onClick}>
       <div className="h-12 w-12 flex-shrink-0 bg-gray-300 rounded overflow-hidden">
         <img
           src={song.coverUrl || `/placeholder.svg?height=48&width=48`}
