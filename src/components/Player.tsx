@@ -1,6 +1,4 @@
 import React, { useRef, useEffect, useState } from "react"
-import Image from "next/image"
-
 type PlayerProps = {
   song: {
     title: string
@@ -200,14 +198,12 @@ const Player: React.FC<PlayerProps> = ({
   }
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 bg-white border-t shadow-lg px-4 py-3 flex items-center z-50">
-      <Image
+    <div className="fixed left-0 right-0 bottom-0 bg-white border-t shadow-lg px-4 py-3 flex items-center z-50">      <img
         src={song.cover_url}
         alt={song.title}
         width={48}
         height={48}
         className="h-12 w-12 rounded mr-4 object-cover"
-        unoptimized
       />
       <div className="flex-1">
         <div className="font-semibold">{song.title}</div>

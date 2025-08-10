@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useNavigate, Link } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Container from "./components/Container"
 import SongList from "./components/SongList"
@@ -10,6 +11,8 @@ import Player from "./components/Player"
 import { supabase } from "./lib/supabaseClient"
 import { useSyncRoom, SyncEvent } from "./lib/useSyncRoom"
 import type { Song } from "./types"
+import SongRoutes from "./components/SongRoutes"
+import "../app/globals.css"
 
 const DEFAULT_ROOM = "sala1"
 
@@ -25,6 +28,9 @@ function App() {
   // Estado de sala y rol
   const [roomId, setRoomId] = useState(DEFAULT_ROOM)
   const [isHost, setIsHost] = useState(true) // Cambia a false para probar como oyente
+
+  // Simulación de favoritas 
+  const [favorites, setFavorites] = useState<Song[]>([])
 
   // Cargar canciones desde Supabase
   useEffect(() => {
@@ -46,7 +52,7 @@ function App() {
       song.title.toLowerCase().includes(search.toLowerCase())
     )
   
-  // Handler para SongItem
+  // Handler para SongItem con lógica de favoritos
   const handleSongClick = (song: Song) => {
     setSelectedSong(song)
     setIsPlaying(true)
@@ -59,15 +65,20 @@ function App() {
         currentTime: 0,
         timestamp: Date.now(),
       })
-      // Emitir play inmediatamente después para que los oyentes reproduzcan automáticamente
-      sendSyncEvent({
-        action: "play",
-        songId: String(song.id),
-        currentTime: 0,
-        timestamp: Date.now(),
-      })
     }
   }
+
+  // Favoritos: agregar/quitar
+  const toggleFavorite = useCallback((song: Song) => {
+    setFavorites(prev => {
+      const exists = prev.some(fav => fav.id === song.id)
+      if (exists) {
+        return prev.filter(fav => fav.id !== song.id)
+      } else {
+        return [...prev, song]
+      }
+    })
+  }, [])
 
   // Sincronización con Supabase
   const onSyncEvent = useCallback((event: SyncEvent) => {
@@ -127,65 +138,60 @@ function App() {
     }
   }
 
+  const navigate = useNavigate();
+
+  // Lista de géneros únicos
+  const genres = Array.from(new Set(songs.map(song => song.genre))).filter(Boolean);
+
+  // Handler para navegar a la ruta de género
+  const handleGenreClick = (genre: string) => {
+    navigate(`/category/${genre}`);
+  };
+
+  // Handler para navegar a favoritos
+  const handleFavoritesClick = () => {
+    navigate("/favoritos");
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 pb-24">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
-
       <main className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6">Mi Biblioteca Musical</h1>
-        
         <SearchBar
           value={search}
           onChange={setSearch}
           placeholder="Buscar canciones..."
         />
-
-        {mounted && (
-          <>
-            {activeTab === "rock" && (
-              <Container title="Rock Clásico">
-                <SongList
-                  songs={filterSongs(songs.filter(song => song.genre === "rock"))}
-                  onSongClick={handleSongClick}
-                />
-              </Container>
-            )}
-
-            {activeTab === "pop" && (
-              <Container title="Pop Hits">
-                <SongList
-                  songs={filterSongs(songs.filter(song => song.genre === "pop"))}
-                  onSongClick={handleSongClick}
-                />
-              </Container>
-            )}
-
-            {activeTab === "jazz" && (
-              <Container title="Jazz & Blues">
-                <SongList
-                  songs={filterSongs(songs.filter(song => song.genre === "jazz"))}
-                  onSongClick={handleSongClick}
-                />
-              </Container>
-            )}
-
-            {activeTab === "electronic" && (
-              <Container title="Música Electrónica">
-                <SongList
-                  songs={filterSongs(songs.filter(song => song.genre === "electronic"))}
-                  onSongClick={handleSongClick}
-                />
-              </Container>
-            )}
-
-            <Container title="Todas las canciones">
-              <SongList
-                songs={filterSongs(songs)}
-                onSongClick={handleSongClick}
-              />
-            </Container>
-          </>
-        )}
+        {/* Lista de géneros como navegación */}
+        <div className="flex gap-2 mb-6">
+          {genres.map(genre => (
+            <button
+              key={genre}
+              className="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+              onClick={() => handleGenreClick(genre)}
+            >
+              {genre.charAt(0).toUpperCase() + genre.slice(1)}
+            </button>
+          ))}
+          {/* Botón de favoritos */}
+          <button
+            className="px-3 py-1 rounded bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition font-bold"
+            onClick={handleFavoritesClick}
+          >
+            ★ Favoritos
+          </button>
+          {/* Botón de crear canción */}
+          <Link
+            to="/create-song"
+            className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition font-bold"
+            // onClick={handleCreateSongClick} // Puedes usar un onClick si necesitas más lógica, pero el Link ya maneja la navegación.
+          >
+            + Crear Canción
+          </Link>
+        </div>
+        {/* Rutas principales de canciones */}
+        <SongRoutes songs={songs} favorites={favorites} toggleFavorite={toggleFavorite} onSongClick={handleSongClick} />
       </main>
 
       <Room
