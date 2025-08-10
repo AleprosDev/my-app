@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Container from "./components/Container"
 import SongList from "./components/SongList"
@@ -29,7 +29,7 @@ function App() {
   const [roomId, setRoomId] = useState(DEFAULT_ROOM)
   const [isHost, setIsHost] = useState(true) // Cambia a false para probar como oyente
 
-  // Simulación de favoritas (puedes conectar con estado real)
+  // Simulación de favoritas 
   const [favorites, setFavorites] = useState<Song[]>([])
 
   // Cargar canciones desde Supabase
@@ -181,6 +181,14 @@ function App() {
           >
             ★ Favoritos
           </button>
+          {/* Botón de crear canción */}
+          <Link
+            to="/create-song"
+            className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition font-bold"
+            // onClick={handleCreateSongClick} // Puedes usar un onClick si necesitas más lógica, pero el Link ya maneja la navegación.
+          >
+            + Crear Canción
+          </Link>
         </div>
         {/* Rutas principales de canciones */}
         <SongRoutes songs={songs} favorites={favorites} toggleFavorite={toggleFavorite} onSongClick={handleSongClick} />
