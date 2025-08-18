@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "source": "/storage/v1/object/public/music/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}
