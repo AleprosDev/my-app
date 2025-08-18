@@ -37,22 +37,7 @@ useEffect(() => {
   const fetchSongs = async () => {
     const { data, error } = await supabase.from("songs").select("*");
     if (!error && data) {
-      const songsWithUrls = data.map((song) => {
-        const { data: audioUrlData } = supabase.storage
-          .from("music")
-          .getPublicUrl(song.audio_url); // <- Usa song.audio_url como path
-        
-        const { data: coverUrlData } = supabase.storage
-          .from("covers") // O el nombre de tu bucket de carátulas
-          .getPublicUrl(song.cover_url); // <- Usa song.cover_url como path
-        
-        return {
-          ...song,
-          audio_url: audioUrlData.publicUrl,
-          cover_url: coverUrlData.publicUrl,
-        };
-      });
-      setSongs(songsWithUrls);
+      setSongs(data);
     }
   };
   fetchSongs();
