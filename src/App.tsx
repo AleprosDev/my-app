@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useEffect, useState, useCallback, useRef } from "react"
+import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Container from "./components/Container"
 import SongList from "./components/SongList"
@@ -24,24 +24,71 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [mounted, setMounted] = useState(false)
+  
+  const currentTimeRef = useRef(0)
+  const lastSyncTimeRef = useRef(0)
+
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // Estado de sala y rol
-  const [roomId, setRoomId] = useState(DEFAULT_ROOM)
+  const [roomId, setRoomId] = useState(() => {
+    const urlRoom = searchParams.get("room")
+    if (urlRoom) return urlRoom
+    const storedRoom = localStorage.getItem("music_room_id")
+    return storedRoom || DEFAULT_ROOM
+  })
+  
+  // Persistir roomId y actualizar URL
+  useEffect(() => {
+    localStorage.setItem("music_room_id", roomId)
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev)
+      newParams.set("room", roomId)
+      return newParams
+    }, { replace: true })
+  }, [roomId, setSearchParams])
+
   const [isHost, setIsHost] = useState(true) // Cambia a false para probar como oyente
 
   // Simulación de favoritas 
   const [favorites, setFavorites] = useState<Song[]>([])
 
-// Cargar canciones desde Supabase
-useEffect(() => {
-  const fetchSongs = async () => {
-    const { data, error } = await supabase.from("songs").select("*");
-    if (!error && data) {
-      setSongs(data);
+  // Cargar canciones desde Supabase
+  useEffect(() => {
+    const fetchSongs = async () => {
+      const { data, error } = await supabase.from("songs").select("*")
+      console.log("Supabase data:", data, "error:", error)
+      if (!error && data) {
+        // Normalizar URLs si vienen relativas desde la DB o son URLs firmadas caducadas
+        const formattedData = data.map((song: Song) => {
+          let filename = song.audio_url || ""
+
+          // Si es una URL de Supabase (sign o public), intentamos extraer solo el nombre del archivo
+          if (filename.includes("supabase.co") && filename.includes("/music/")) {
+            const parts = filename.split("/music/")
+            if (parts.length > 1) {
+              filename = parts[1].split("?")[0] // "Despacito.mp3"
+            }
+          }
+
+          // Si después de limpiar sigue siendo una URL completa (ej: externa), la dejamos
+          if (filename.startsWith("http")) {
+            return { ...song, audio_url: filename }
+          }
+
+          // Construimos la URL pública
+          return {
+            ...song,
+            audio_url: filename
+              ? `https://qmenlmdjfxctqmgyrpka.supabase.co/storage/v1/object/public/music/${filename.replace(/^\//, "")}`
+              : "",
+          }
+        })
+        setSongs(formattedData)
+      }
     }
-  };
-  fetchSongs();
-}, []); 
+    fetchSongs()
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -84,25 +131,52 @@ useEffect(() => {
   // Sincronización con Supabase
   const onSyncEvent = useCallback((event: SyncEvent) => {
     if (event.action === "play") {
-      // Buscar la canción por ID y seleccionarla si es diferente
       const song = songs.find(s => String(s.id) === event.songId)
       if (song) setSelectedSong(song)
       setIsPlaying(true)
       setProgress(event.currentTime)
+      currentTimeRef.current = event.currentTime
     } else if (event.action === "pause") {
       setIsPlaying(false)
       setProgress(event.currentTime)
+      currentTimeRef.current = event.currentTime
     } else if (event.action === "seek") {
       setProgress(event.currentTime)
+      currentTimeRef.current = event.currentTime
     } else if (event.action === "change_song") {
-      // Buscar la canción por ID y seleccionarla
       const song = songs.find(s => String(s.id) === event.songId)
       if (song) setSelectedSong(song)
       setProgress(0)
+      currentTimeRef.current = 0
+    } else if (event.action === "time_update") {
+      // Solo corregir si hay desvío > 2s
+      if (Math.abs(currentTimeRef.current - event.currentTime) > 2) {
+        console.log("Sincronizando tiempo...", currentTimeRef.current, event.currentTime)
+        setProgress(event.currentTime)
+        currentTimeRef.current = event.currentTime
+      }
     }
   }, [songs])
 
   const { sendSyncEvent } = useSyncRoom({ roomId, onEvent: onSyncEvent })
+
+  const handleTimeUpdate = (currentTime: number) => {
+    currentTimeRef.current = currentTime
+    
+    if (isHost && selectedSong && isPlaying) {
+      const now = Date.now()
+      // Enviar actualización cada 2 segundos
+      if (now - lastSyncTimeRef.current > 2000) {
+        sendSyncEvent({
+          action: "time_update",
+          songId: String(selectedSong.id),
+          currentTime: currentTime,
+          timestamp: now,
+        })
+        lastSyncTimeRef.current = now
+      }
+    }
+  }
 
   // Handlers para el host
   const handlePlay = () => {
@@ -112,7 +186,7 @@ useEffect(() => {
     sendSyncEvent({
       action: "play",
       songId: String(selectedSong.id),
-      currentTime: progress,
+      currentTime: currentTimeRef.current,
       timestamp: Date.now(),
     })
   }
@@ -123,12 +197,13 @@ useEffect(() => {
     sendSyncEvent({
       action: "pause",
       songId: String(selectedSong.id),
-      currentTime: progress,
+      currentTime: currentTimeRef.current,
       timestamp: Date.now(),
     })
   }
   const handleSliderChange = (value: number) => {
     setProgress(value)
+    currentTimeRef.current = value
     if (isHost && selectedSong) {
       sendSyncEvent({
         action: "seek",
@@ -219,6 +294,10 @@ useEffect(() => {
         isPlaying={isPlaying}
         progress={progress}
         onSliderChange={handleSliderChange}
+        onTimeUpdate={handleTimeUpdate}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        isHost={isHost}
       />
 
     </div>

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import { supabase } from "./supabaseClient"
 
 export type SyncEvent = {
-  action: "play" | "pause" | "seek" | "change_song"
+  action: "play" | "pause" | "seek" | "change_song" | "time_update"
   songId: string
   currentTime: number
   timestamp: number

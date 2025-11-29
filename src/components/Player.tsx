@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from "react"
+import { Play, Pause, Volume2, VolumeX } from "lucide-react"
+
 type PlayerProps = {
   song: {
     title: string
@@ -10,6 +12,10 @@ type PlayerProps = {
   isPlaying: boolean
   progress: number
   onSliderChange: (value: number) => void
+  onTimeUpdate?: (currentTime: number) => void
+  onPlay?: () => void
+  onPause?: () => void
+  isHost?: boolean
 }
 
 const getDurationSeconds = (duration: string) => {
@@ -22,6 +28,10 @@ const Player: React.FC<PlayerProps> = ({
   isPlaying,
   progress,
   onSliderChange,
+  onTimeUpdate,
+  onPlay,
+  onPause,
+  isHost = false,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [canPlay, setCanPlay] = useState(false)
@@ -51,7 +61,11 @@ const Player: React.FC<PlayerProps> = ({
   // Actualizar el slider local solo con el avance natural del audio
   const handleAudioTimeUpdate = () => {
     if (audioRef.current && !isSeeking) {
-      setLocalProgress(Math.floor(audioRef.current.currentTime))
+      const currentTime = audioRef.current.currentTime
+      setLocalProgress(Math.floor(currentTime))
+      if (onTimeUpdate) {
+        onTimeUpdate(currentTime)
+      }
     }
   }
 
@@ -198,16 +212,37 @@ const Player: React.FC<PlayerProps> = ({
   }
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 bg-white border-t shadow-lg px-4 py-3 flex items-center z-50">      <img
+    <div className="fixed left-0 right-0 bottom-0 bg-white border-t shadow-lg px-4 py-3 flex items-center z-50 gap-4">
+      <img
         src={song.cover_url}
         alt={song.title}
         width={48}
         height={48}
-        className="h-12 w-12 rounded mr-4 object-cover"
+        className="h-12 w-12 rounded object-cover"
       />
-      <div className="flex-1">
-        <div className="font-semibold">{song.title}</div>
-        <div className="text-sm text-gray-500">{song.artist}</div>
+      
+      {/* Controles de Play/Pause para el Host */}
+      {isHost && (
+        <button
+          onClick={isPlaying ? onPause : onPlay}
+          className="p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition shadow-md flex-shrink-0"
+          title={isPlaying ? "Pausar" : "Reproducir"}
+        >
+          {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+        </button>
+      )}
+
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-baseline">
+          <div className="truncate pr-2">
+            <span className="font-semibold">{song.title}</span>
+            <span className="text-sm text-gray-500 ml-2">{song.artist}</span>
+          </div>
+          <div className="text-xs text-gray-400 whitespace-nowrap">
+            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")} / {song.duration}
+          </div>
+        </div>
+        
         <input
           type="range"
           min={0}
@@ -216,14 +251,10 @@ const Player: React.FC<PlayerProps> = ({
           onChange={handleSliderChange}
           onMouseUp={handleSliderCommit}
           onTouchEnd={handleSliderCommit}
-          className="w-full mt-2"
+          className="w-full mt-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          disabled={!isHost} // Solo el host puede hacer seek
         />
-        <div className="text-xs text-gray-400 flex justify-between">
-          <span>
-            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")}
-          </span>
-          <span>{song.duration}</span>
-        </div>
+        
         <audio
           ref={audioRef}
           src={song.audio_url}
@@ -234,24 +265,28 @@ const Player: React.FC<PlayerProps> = ({
           onError={handleAudioError}
           loop
         />
-        <div className="flex items-center mt-2">
+        
+        <div className="flex items-center mt-1 gap-2">
+          <Volume2 size={16} className="text-gray-500" />
           <input
             type="range"
             min={0}
             max={100}
             value={volume}
             onChange={e => setVolume(Number(e.target.value))}
-            className="w-24 mr-2 align-middle"
+            className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-500"
             aria-label="Volumen"
           />
-          <span className="text-xs text-gray-500">{volume}%</span>
+          
+          {!canPlay && !audioError && (
+            <span className="text-blue-600 text-xs ml-2 animate-pulse">Cargando...</span>
+          )}
+          {audioError && (
+            <span className="text-red-600 text-xs ml-2 truncate" title={audioError}>
+              Error: {audioError}
+            </span>
+          )}
         </div>
-        {!canPlay && !audioError && (
-          <div className="text-blue-600 text-xs mt-2">Cargando audio completo...</div>
-        )}
-        {audioError && (
-          <div className="text-red-600 text-xs mt-2">{audioError}</div>
-        )}
       </div>
     </div>
   )
