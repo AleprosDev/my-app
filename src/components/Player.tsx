@@ -38,7 +38,15 @@ const Player: React.FC<PlayerProps> = ({
   const [audioError, setAudioError] = useState<string | null>(null)
   const [localProgress, setLocalProgress] = useState(0)
   const [isSeeking, setIsSeeking] = useState(false)
-  const [volume, setVolume] = useState(80) // Volumen local, 80% por defecto
+  const [volume, setVolume] = useState(() => {
+    const stored = localStorage.getItem("music_volume")
+    return stored ? Number(stored) : 80
+  }) // Volumen local, 80% por defecto
+
+  // Persistir volumen
+  useEffect(() => {
+    localStorage.setItem("music_volume", String(volume))
+  }, [volume])
 
   useEffect(() => {
     setCanPlay(false)

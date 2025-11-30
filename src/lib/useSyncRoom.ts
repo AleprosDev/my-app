@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react"
 import { supabase } from "./supabaseClient"
 
 export type SyncEvent = {
-  action: "play" | "pause" | "seek" | "change_song" | "time_update"
+  action: "play" | "pause" | "seek" | "change_song" | "time_update" | "play_sfx"
   songId: string
   currentTime: number
   timestamp: number
+  sfxId?: string // ID del efecto de sonido para la acción play_sfx
 }
 
 export type RoomUser = {

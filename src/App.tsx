@@ -12,13 +12,15 @@ import { supabase } from "./lib/supabaseClient"
 import { useSyncRoom, SyncEvent } from "./lib/useSyncRoom"
 import type { Song } from "./types"
 import SongRoutes from "./components/SongRoutes"
+import Soundboard, { useSoundEffects, SfxItem } from "./components/Soundboard"
 import "../app/globals.css"
 
 const DEFAULT_ROOM = "sala1"
 
 function App() {
   const [songs, setSongs] = useState<Song[]>([])
-  const [activeTab, setActiveTab] = useState("rock")
+  const [sfxList, setSfxList] = useState<SfxItem[]>([])
+  const [activeTab, setActiveTab] = useState("medieval")
   const [search, setSearch] = useState("")
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -63,8 +65,16 @@ function App() {
     localStorage.setItem("room_user_name", userName)
   }, [userName])
 
-  // Simulación de favoritas 
-  const [favorites, setFavorites] = useState<Song[]>([])
+  // Simulación de favoritas con persistencia local
+  const [favorites, setFavorites] = useState<Song[]>(() => {
+    const stored = localStorage.getItem("music_favorites")
+    return stored ? JSON.parse(stored) : []
+  })
+
+  // Persistir favoritos
+  useEffect(() => {
+    localStorage.setItem("music_favorites", JSON.stringify(favorites))
+  }, [favorites])
 
   // Cargar canciones desde Supabase
   useEffect(() => {
@@ -103,16 +113,38 @@ function App() {
     fetchSongs()
   }, [])
 
+  // Cargar SFX desde Supabase
+  useEffect(() => {
+    const fetchSfx = async () => {
+      console.log("Iniciando carga de SFX...")
+      const { data, error } = await supabase.from("sfx").select("*")
+      console.log("Respuesta Supabase SFX:", data, error)
+      
+      if (error) {
+        console.error("Error al cargar SFX:", error.message)
+      }
+      
+      if (!error && data) {
+        const formattedSfx = data.map((item: any) => ({
+          id: String(item.id),
+          label: item.label,
+          icon: item.icon,
+          url: item.url.startsWith("http") 
+            ? item.url 
+            : `https://qmenlmdjfxctqmgyrpka.supabase.co/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`
+        }))
+        setSfxList(formattedSfx)
+      }
+    }
+    fetchSfx()
+  }, [])
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Filtrar canciones por título
-  const filterSongs = (songs: Song[]) =>
-    songs.filter(song =>
-      song.title.toLowerCase().includes(search.toLowerCase())
-    )
-  
+  const { playSfx } = useSoundEffects(sfxList)
+
   // Handler para SongItem con lógica de favoritos
   const handleSongClick = (song: Song) => {
     setSelectedSong(song)
@@ -143,7 +175,9 @@ function App() {
 
   // Sincronización con Supabase
   const onSyncEvent = useCallback((event: SyncEvent) => {
-    if (event.action === "play") {
+    if (event.action === "play_sfx" && event.sfxId) {
+      playSfx(event.sfxId)
+    } else if (event.action === "play") {
       const song = songs.find(s => String(s.id) === event.songId)
       if (song) setSelectedSong(song)
       setIsPlaying(true)
@@ -169,7 +203,7 @@ function App() {
         currentTimeRef.current = event.currentTime
       }
     }
-  }, [songs])
+  }, [songs, playSfx])
 
   const { sendSyncEvent, users } = useSyncRoom({ 
     roomId, 
@@ -267,13 +301,64 @@ function App() {
     }
   }
 
-  const navigate = useNavigate();
+  // Handler para SFX (Host)
+  const handlePlaySfx = (sfxId: string) => {
+    if (!isHost) return
+    // Reproducir localmente
+    playSfx(sfxId)
+    // Enviar evento a la sala
+    sendSyncEvent({
+      action: "play_sfx",
+      songId: "sfx", // Dummy ID
+      currentTime: 0,
+      timestamp: Date.now(),
+      sfxId: sfxId
+    })
+  }
 
-  // Lista de géneros únicos
-  const genres = Array.from(new Set(songs.map(song => song.genre))).filter(Boolean);
+  // Persistir estado del Host para recuperación tras refresh
+  useEffect(() => {
+    if (isHost && selectedSong) {
+      const state = {
+        songId: selectedSong.id,
+        isPlaying,
+        progress: currentTimeRef.current,
+        timestamp: Date.now()
+      }
+      localStorage.setItem("host_state", JSON.stringify(state))
+    }
+  }, [isHost, selectedSong, isPlaying, progress])
+
+  // Recuperar estado del Host al montar si soy Host
+  useEffect(() => {
+    if (isHost && !selectedSong) {
+      const stored = localStorage.getItem("host_state")
+      if (stored) {
+        try {
+          const state = JSON.parse(stored)
+          // Solo recuperar si es reciente (ej. menos de 1 hora)
+          if (Date.now() - state.timestamp < 3600000) {
+            const song = songs.find(s => s.id === state.songId)
+            if (song) {
+              console.log("Recuperando sesión de Host:", song.title)
+              setSelectedSong(song)
+              setProgress(state.progress)
+              currentTimeRef.current = state.progress
+              setIsPlaying(false) // Recuperar en pausa por seguridad/autoplay policies
+            }
+          }
+        } catch (e) {
+          console.error("Error recuperando estado de host", e)
+        }
+      }
+    }
+  }, [isHost, selectedSong, songs])
+
+  const navigate = useNavigate();
 
   // Handler para navegar a la ruta de género
   const handleGenreClick = (genre: string) => {
+    setActiveTab(genre)
     navigate(`/category/${genre}`);
   };
 
@@ -284,7 +369,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-rpg-dark pb-24">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} />
       <main className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6 text-rpg-light">Mi Biblioteca Musical</h1>
         <SearchBar
@@ -292,17 +377,8 @@ function App() {
           onChange={setSearch}
           placeholder="Buscar canciones..."
         />
-        {/* Lista de géneros como navegación */}
+        {/* Botones de acción */}
         <div className="flex gap-2 mb-6">
-          {genres.map(genre => (
-            <button
-              key={genre}
-              className="px-3 py-1 rounded bg-rpg-secondary text-white hover:bg-rpg-primary transition border border-rpg-light/20"
-              onClick={() => handleGenreClick(genre)}
-            >
-              {genre.charAt(0).toUpperCase() + genre.slice(1)}
-            </button>
-          ))}
           {/* Botón de favoritos */}
           <button
             className="px-3 py-1 rounded bg-rpg-accent text-white hover:bg-rpg-light hover:text-rpg-dark transition font-bold border border-rpg-light/20"
@@ -327,6 +403,9 @@ function App() {
         userName={userName}
         setUserName={setUserName}
       />
+      
+      <Soundboard isHost={isHost} onPlaySfx={handlePlaySfx} sounds={sfxList} />
+
       <Player
         song={selectedSong ? {
           ...selectedSong,

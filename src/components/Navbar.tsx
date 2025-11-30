@@ -9,10 +9,10 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: "rock", name: "Rock" },
-    { id: "pop", name: "Pop" },
-    { id: "jazz", name: "Jazz" },
-    { id: "electronic", name: "Electrónica" },
+    { id: "medieval", name: "Medieval" },
+    { id: "scifi", name: "Sci-Fi" },
+    { id: "modern", name: "Modern" },
+    { id: "horror", name: "Horror" },
   ]
 
   return (
