@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Volume2, Zap, Shield, Skull, DoorOpen, CloudRain, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
 import { AmbienceTrack } from "../lib/useAmbience"
 
@@ -200,7 +200,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
                     value={state.volume}
                     onChange={(e) => handleAmbienceVolume(track, Number(e.target.value))}
                     className="w-full h-1 bg-rpg-secondary/50 rounded-lg appearance-none cursor-pointer accent-rpg-primary"
-                    disabled={!state.isPlaying && !isHost}
+                    // disabled={!state.isPlaying && !isHost} // Permitir ajustar volumen siempre
                     title={isHost ? "Volumen Global" : "Volumen Local"}
                   />
                 </div>
@@ -225,9 +225,16 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
 // Hook helper para reproducir sonidos (usado en App.tsx)
 export const useSoundEffects = (sounds: SfxItem[]) => {
   const audioPool = useRef<HTMLAudioElement[]>([])
+  
+  // Usar ref para tener siempre la lista actualizada sin depender del ciclo de render del closure antiguo
+  const soundsRef = useRef(sounds)
+  useEffect(() => {
+    soundsRef.current = sounds
+  }, [sounds])
 
   const playSfx = (sfxId: string, volume: number = 0.5) => {
-    const sfx = sounds.find(s => String(s.id) === String(sfxId))
+    console.log("Intentando reproducir SFX:", sfxId, "Lista disponible:", soundsRef.current.map(s => s.id))
+    const sfx = soundsRef.current.find(s => String(s.id) === String(sfxId))
     if (!sfx) {
       console.warn("SFX not found:", sfxId)
       return
