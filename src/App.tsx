@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { useNavigate, Link, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Container from "./components/Container"
 import SongList from "./components/SongList"
@@ -48,7 +48,20 @@ function App() {
     }, { replace: true })
   }, [roomId, setSearchParams])
 
-  const [isHost, setIsHost] = useState(true) // Cambia a false para probar como oyente
+  const [isHost, setIsHost] = useState(false) // Por defecto oyente
+  const [userName, setUserName] = useState(() => localStorage.getItem("room_user_name") || "")
+  const [userId] = useState(() => {
+    const stored = localStorage.getItem("room_user_id")
+    if (stored) return stored
+    const newId = `${Math.random().toString(36).slice(2)}-${Date.now()}`
+    localStorage.setItem("room_user_id", newId)
+    return newId
+  })
+
+  // Guardar nombre
+  useEffect(() => {
+    localStorage.setItem("room_user_name", userName)
+  }, [userName])
 
   // Simulación de favoritas 
   const [favorites, setFavorites] = useState<Song[]>([])
@@ -158,7 +171,47 @@ function App() {
     }
   }, [songs])
 
-  const { sendSyncEvent } = useSyncRoom({ roomId, onEvent: onSyncEvent })
+  const { sendSyncEvent, users } = useSyncRoom({ 
+    roomId, 
+    userId,
+    name: userName,
+    role: isHost ? "host" : "listener",
+    onEvent: onSyncEvent,
+    hostState: isHost && selectedSong ? {
+      songId: String(selectedSong.id),
+      isPlaying,
+      progress: currentTimeRef.current
+    } : undefined
+  })
+
+  // Sincronización inicial al entrar (si soy oyente y hay un host activo)
+  useEffect(() => {
+    if (isHost) return
+    
+    const host = users.find(u => u.role === "host" && u.hostState)
+    if (host && host.hostState) {
+      // Solo sincronizar si no estamos reproduciendo nada o si la canción es diferente
+      // O si acabamos de montar el componente (podríamos usar un ref para trackear "initialSyncDone")
+      const { songId, isPlaying: hostPlaying, progress: hostProgress, timestamp } = host.hostState
+      
+      // Calcular tiempo actual estimado
+      const now = Date.now()
+      const timeDiff = (now - timestamp) / 1000
+      const estimatedTime = hostPlaying ? hostProgress + timeDiff : hostProgress
+
+      // Si no tengo canción seleccionada, o es distinta, forzar cambio
+      if (!selectedSong || String(selectedSong.id) !== songId) {
+        const song = songs.find(s => String(s.id) === songId)
+        if (song) {
+          console.log("Sincronización inicial con Host:", song.title, estimatedTime)
+          setSelectedSong(song)
+          setProgress(estimatedTime)
+          currentTimeRef.current = estimatedTime
+          setIsPlaying(hostPlaying)
+        }
+      }
+    }
+  }, [users, isHost, songs, selectedSong]) // Dependencias: cuando cambian los usuarios (entra host) o las canciones cargan
 
   const handleTimeUpdate = (currentTime: number) => {
     currentTimeRef.current = currentTime
@@ -230,10 +283,10 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-24">
+    <div className="min-h-screen bg-rpg-dark pb-24">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Mi Biblioteca Musical</h1>
+        <h1 className="text-3xl font-bold mb-6 text-rpg-light">Mi Biblioteca Musical</h1>
         <SearchBar
           value={search}
           onChange={setSearch}
@@ -244,7 +297,7 @@ function App() {
           {genres.map(genre => (
             <button
               key={genre}
-              className="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+              className="px-3 py-1 rounded bg-rpg-secondary text-white hover:bg-rpg-primary transition border border-rpg-light/20"
               onClick={() => handleGenreClick(genre)}
             >
               {genre.charAt(0).toUpperCase() + genre.slice(1)}
@@ -252,19 +305,11 @@ function App() {
           ))}
           {/* Botón de favoritos */}
           <button
-            className="px-3 py-1 rounded bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition font-bold"
+            className="px-3 py-1 rounded bg-rpg-accent text-white hover:bg-rpg-light hover:text-rpg-dark transition font-bold border border-rpg-light/20"
             onClick={handleFavoritesClick}
           >
             ★ Favoritos
           </button>
-          {/* Botón de crear canción */}
-          <Link
-            to="/create-song"
-            className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 transition font-bold"
-            // onClick={handleCreateSongClick} // Puedes usar un onClick si necesitas más lógica, pero el Link ya maneja la navegación.
-          >
-            + Crear Canción
-          </Link>
         </div>
         {/* Rutas principales de canciones */}
         <SongRoutes songs={songs} favorites={favorites} toggleFavorite={toggleFavorite} onSongClick={handleSongClick} />
@@ -278,6 +323,9 @@ function App() {
         onPause={handlePause}
         isHost={isHost}
         setIsHost={setIsHost}
+        users={users}
+        userName={userName}
+        setUserName={setUserName}
       />
       <Player
         song={selectedSong ? {

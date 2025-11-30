@@ -54,58 +54,58 @@ const CreateSongForm: React.FC = () => {
   }, [data, navigate]);
 
   return (
-    <div className="p-8 bg-gray-800 rounded-lg shadow-xl max-w-lg mx-auto mt-10">
-      <h2 className="text-3xl font-bold text-white mb-6 text-center">Crear Nueva Canción</h2>
+    <div className="p-8 bg-rpg-dark rounded-lg shadow-xl max-w-lg mx-auto mt-10 border border-rpg-accent">
+      <h2 className="text-3xl font-bold text-rpg-light mb-6 text-center">Crear Nueva Canción</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-300">Título</label>
+          <label htmlFor="title" className="block text-sm font-medium text-rpg-light/80">Título</label>
           <input
             type="text"
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+            className="mt-1 block w-full rounded-md bg-rpg-secondary/20 border-rpg-secondary text-white shadow-sm focus:border-rpg-primary focus:ring-rpg-primary sm:text-sm p-2 border"
             required
           />
         </div>
         <div>
-          <label htmlFor="artist" className="block text-sm font-medium text-gray-300">Artista</label>
+          <label htmlFor="artist" className="block text-sm font-medium text-rpg-light/80">Artista</label>
           <input
             type="text"
             id="artist"
             value={artist}
             onChange={(e) => setArtist(e.target.value)}
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+            className="mt-1 block w-full rounded-md bg-rpg-secondary/20 border-rpg-secondary text-white shadow-sm focus:border-rpg-primary focus:ring-rpg-primary sm:text-sm p-2 border"
             required
           />
         </div>
         <div>
-          <label htmlFor="duration" className="block text-sm font-medium text-gray-300">Duración</label>
+          <label htmlFor="duration" className="block text-sm font-medium text-rpg-light/80">Duración</label>
           <input
             type="text"
             id="duration"
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
             placeholder="ej. 3:45"
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+            className="mt-1 block w-full rounded-md bg-rpg-secondary/20 border-rpg-secondary text-white shadow-sm focus:border-rpg-primary focus:ring-rpg-primary sm:text-sm p-2 border placeholder-rpg-light/30"
             required
           />
         </div>
         <div>
-          <label htmlFor="genre" className="block text-sm font-medium text-gray-300">Género</label>
+          <label htmlFor="genre" className="block text-sm font-medium text-rpg-light/80">Género</label>
           <input
             type="text"
             id="genre"
             value={genre}
             onChange={(e) => setGenre(e.target.value)}
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+            className="mt-1 block w-full rounded-md bg-rpg-secondary/20 border-rpg-secondary text-white shadow-sm focus:border-rpg-primary focus:ring-rpg-primary sm:text-sm p-2 border"
             required
           />
         </div>
 
         <button
           type="submit"
-          className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm font-medium text-white transition duration-300 ${loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}`}
+          className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm font-medium transition duration-300 ${loading ? 'bg-rpg-secondary cursor-not-allowed text-white' : 'bg-rpg-primary text-rpg-dark hover:bg-rpg-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rpg-primary'}`}
           disabled={loading}
         >
           {loading ? 'Creando canción...' : 'Crear Canción'}

@@ -1,11 +1,5 @@
-import React, { useState, useEffect } from "react"
-import { supabase } from "../lib/supabaseClient"
-
-interface RoomUser {
-  id: string
-  role: "host" | "listener"
-  name?: string
-}
+import React, { useState } from "react"
+import { RoomUser } from "../lib/useSyncRoom"
 
 interface RoomProps {
   roomId: string
@@ -15,60 +9,31 @@ interface RoomProps {
   onPause: () => void
   isHost: boolean
   setIsHost: (isHost: boolean) => void
+  users: RoomUser[]
+  userName: string
+  setUserName: (name: string) => void
 }
 
-const Room: React.FC<RoomProps> = ({ roomId, setRoomId, isPlaying, onPlay, onPause, isHost, setIsHost }) => {
+const Room: React.FC<RoomProps> = ({ 
+  roomId, 
+  setRoomId, 
+  isPlaying, 
+  onPlay, 
+  onPause, 
+  isHost, 
+  setIsHost,
+  users,
+  userName,
+  setUserName
+}) => {
   const [input, setInput] = useState(roomId)
   // El rol local se deriva de isHost
   const role = isHost ? "host" : "listener"
-  const [users, setUsers] = useState<RoomUser[]>([])
-  const [name, setName] = useState(() => localStorage.getItem("room_user_name") || "")
 
   // Detectar si ya hay un host en la sala (excluyéndome a mí mismo si soy host)
   // Nota: users puede contener duplicados si la presencia no se limpia bien, filtramos por ID único si es posible, o confiamos en el role
   const activeHost = users.find(u => u.role === "host")
   
-  // Guardar el nombre en localStorage cuando cambie
-  useEffect(() => {
-    localStorage.setItem("room_user_name", name)
-  }, [name])
-
-  // Presencia en tiempo real usando Supabase Realtime
-  useEffect(() => {
-    const channel = supabase.channel(`room-presence:${roomId}`, {
-      config: { presence: { key: "user" } }
-    })
-    // Generar ID persistente para esta sesión
-    const userId = localStorage.getItem("room_user_id") || `${Math.random().toString(36).slice(2)}-${Date.now()}`
-    localStorage.setItem("room_user_id", userId)
-
-    let unsubscribed = false
-    channel.subscribe()
-    
-    // Esperar a que el canal esté realmente suscrito antes de trackear presencia
-    const waitForJoined = setInterval(() => {
-      if (unsubscribed) return
-      if (channel.state === 'joined') {
-        channel.track({ id: userId, role, name })
-        clearInterval(waitForJoined)
-      }
-    }, 100)
-    
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState()
-      const userList: RoomUser[] = []
-      Object.values(state).forEach((arr: unknown) => {
-        (arr as RoomUser[]).forEach((u: RoomUser) => userList.push(u))
-      })
-      setUsers(userList)
-    })
-    return () => {
-      unsubscribed = true
-      clearInterval(waitForJoined)
-      channel.unsubscribe()
-    }
-  }, [roomId, role, name])
-
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault()
     setRoomId(input)
@@ -77,7 +42,7 @@ const Room: React.FC<RoomProps> = ({ roomId, setRoomId, isPlaying, onPlay, onPau
   }
 
   const handleClaimHost = () => {
-    if (activeHost && activeHost.name !== name) {
+    if (activeHost && activeHost.name !== userName) {
       alert("Ya hay un Dungeon Master en esta sala.")
       return
     }
@@ -92,54 +57,54 @@ const Room: React.FC<RoomProps> = ({ roomId, setRoomId, isPlaying, onPlay, onPau
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4 bg-white rounded shadow-md">
+    <div className="flex flex-col items-center gap-4 p-4 bg-rpg-dark rounded shadow-md border-2 border-rpg-accent">
       <form onSubmit={handleJoin} className="flex gap-2 items-center flex-wrap justify-center">
-        <label className="font-semibold">Room ID:</label>
+        <label className="font-semibold text-rpg-light">Room ID:</label>
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          className="border rounded px-2 py-1"
+          className="border border-rpg-secondary bg-rpg-secondary/20 text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-rpg-primary placeholder-rpg-light/30"
         />
         <input
           type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
+          value={userName}
+          onChange={e => setUserName(e.target.value)}
           placeholder="Tu nombre"
-          className="border rounded px-2 py-1"
+          className="border border-rpg-secondary bg-rpg-secondary/20 text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-rpg-primary placeholder-rpg-light/30"
           style={{ minWidth: 80 }}
         />
-        <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded">Ir a Sala</button>
+        <button type="submit" className="bg-rpg-primary text-rpg-dark font-bold px-3 py-1 rounded hover:bg-rpg-light transition">Ir a Sala</button>
       </form>
-      <div className="text-gray-700">Sala actual: <span className="font-mono">{roomId}</span></div>
+      <div className="text-rpg-light">Sala actual: <span className="font-mono font-bold text-rpg-primary">{roomId}</span></div>
       <button
         onClick={() => {
           const url = `${window.location.origin}/?room=${roomId}`
           navigator.clipboard.writeText(url)
           alert("Link copiado al portapapeles: " + url)
         }}
-        className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+        className="text-xs bg-rpg-secondary text-white hover:bg-rpg-primary hover:text-rpg-dark px-2 py-1 rounded border border-rpg-light/20 transition"
       >
         Copiar Link de Invitación
       </button>
       
       <div className="flex items-center gap-2">
-        <div className="text-gray-700">Rol: <span className="font-bold">{isHost ? "Dungeon Master" : "Oyente"}</span></div>
+        <div className="text-rpg-light">Rol: <span className="font-bold text-rpg-primary">{isHost ? "Dungeon Master" : "Oyente"}</span></div>
         {!isHost && !activeHost && (
           <button 
             onClick={handleClaimHost}
-            className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded border border-yellow-300 hover:bg-yellow-200"
+            className="text-xs bg-rpg-accent text-white px-2 py-1 rounded hover:bg-rpg-light hover:text-rpg-dark transition font-bold"
           >
             Reclamar DM
           </button>
         )}
         {!isHost && activeHost && (
-          <span className="text-xs text-gray-500 italic">(DM: {activeHost.name || "Anónimo"})</span>
+          <span className="text-xs text-rpg-light/70 italic">(DM: {activeHost.name || "Anónimo"})</span>
         )}
         {isHost && (
           <button 
             onClick={() => setIsHost(false)}
-            className="text-xs text-red-500 hover:underline ml-2"
+            className="text-xs text-rpg-light/60 hover:text-red-400 hover:underline ml-2 transition-colors"
           >
             Dejar puesto
           </button>
@@ -147,23 +112,23 @@ const Room: React.FC<RoomProps> = ({ roomId, setRoomId, isPlaying, onPlay, onPau
       </div>
 
       <div className="w-full mt-2">
-        <div className="font-semibold mb-1">Usuarios conectados:</div>
-        <ul className="text-sm">
+        <div className="font-semibold mb-1 text-rpg-light">Usuarios conectados:</div>
+        <ul className="text-sm space-y-1">
           {users.map(u => (
-            <li key={u.id} className="flex items-center gap-2">
-              <span className="font-mono">{u.id.slice(-6)}</span>
-              <span className={u.role === "host" ? "text-green-700" : "text-gray-500"}>
-                {u.role === "host" ? "Dungeon Master" : "Oyente"}
+            <li key={u.id} className="flex items-center gap-2 bg-rpg-secondary/20 p-1 rounded border border-rpg-light/5">
+              <span className="font-mono text-rpg-light/40 text-xs">{u.id.slice(-4)}</span>
+              <span className={`font-bold ${u.role === "host" ? "text-rpg-primary" : "text-rpg-light/80"}`}>
+                {u.role === "host" ? "DM" : "Oyente"}
               </span>
               {u.name && (
-                <span className="text-blue-700 font-semibold ml-2">{u.name}</span>
+                <span className="text-white font-semibold ml-2">{u.name}</span>
               )}
             </li>
           ))}
         </ul>
       </div>
       {isHost && (
-        <div className="text-xs text-gray-500 mt-2 italic">
+        <div className="text-xs text-rpg-light/60 mt-2 italic">
           Usa los controles del reproductor inferior para controlar la música.
         </div>
       )}

@@ -10,10 +10,10 @@ const CategoryList: React.FC<{ songs: Song[], onToggleFavorite?: (song: Song) =>
   const filtered = songs.filter(s => s.genre && s.genre.toLowerCase() === id?.toLowerCase())
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Género: {id}</h2>
+      <h2 className="text-xl font-bold mb-4 text-rpg-primary">Género: {id}</h2>
       <SongList songs={filtered} onToggleFavorite={onToggleFavorite} onSongClick={onSongClick} />
       {filtered.length === 0 && (
-        <div className="text-gray-500">No hay canciones para este género.</div>
+        <div className="text-rpg-light/70">No hay canciones para este género.</div>
       )}
     </div>
   )

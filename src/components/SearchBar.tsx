@@ -13,7 +13,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, placeholder }) =
     value={value}
     onChange={e => onChange(e.target.value)}
     placeholder={placeholder || "Buscar..."}
-    className="mb-6 p-2 border rounded w-full max-w-md"
+    className="mb-6 p-2 border border-rpg-secondary bg-rpg-secondary/20 text-white rounded w-full max-w-md placeholder-rpg-light/50 focus:outline-none focus:ring-2 focus:ring-rpg-primary"
   />
 )
 

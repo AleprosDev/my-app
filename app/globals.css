@@ -4,6 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-rpg-primary: #53c57f;
+  --color-rpg-secondary: #64a25f;
+  --color-rpg-dark: #5e6a0a;
+  --color-rpg-accent: #979311;
+  --color-rpg-light: #f6ff7e;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -45,7 +51,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: yellow;
+  --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.147 0.004 49.25);
@@ -114,7 +120,7 @@
 
 /* Solo CSS estándar y Tailwind compatible para Vite */
 body {
-  background: yellow !important;
+  @apply bg-rpg-dark text-rpg-light;
 }
 
 /* Puedes agregar aquí más estilos globales si lo necesitas */

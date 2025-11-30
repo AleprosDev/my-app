@@ -11,7 +11,7 @@ type FavoritesListProps = {
 const FavoritesList: React.FC<FavoritesListProps> = ({ songs, onToggleFavorite, onSongClick }) => {
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">Favoritos</h2>
+      <h2 className="text-xl font-bold mb-4 text-rpg-primary">Favoritos</h2>
       <SongList songs={songs} onToggleFavorite={onToggleFavorite} onSongClick={onSongClick} />
     </div>
   )
