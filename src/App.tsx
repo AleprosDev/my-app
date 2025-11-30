@@ -13,6 +13,7 @@ import { useSyncRoom, SyncEvent } from "./lib/useSyncRoom"
 import type { Song } from "./types"
 import SongRoutes from "./components/SongRoutes"
 import Soundboard, { useSoundEffects, SfxItem } from "./components/Soundboard"
+import { useAmbience, AmbienceTrack } from "./lib/useAmbience"
 import "../app/globals.css"
 
 const DEFAULT_ROOM = "sala1"
@@ -20,6 +21,7 @@ const DEFAULT_ROOM = "sala1"
 function App() {
   const [songs, setSongs] = useState<Song[]>([])
   const [sfxList, setSfxList] = useState<SfxItem[]>([])
+  const [ambienceList, setAmbienceList] = useState<AmbienceTrack[]>([])
   const [activeTab, setActiveTab] = useState("medieval")
   const [search, setSearch] = useState("")
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
@@ -139,11 +141,31 @@ function App() {
     fetchSfx()
   }, [])
 
+  // Cargar Ambientes desde Supabase
+  useEffect(() => {
+    const fetchAmbience = async () => {
+      const { data, error } = await supabase.from("ambience").select("*")
+      if (!error && data) {
+        const formatted = data.map((item: any) => ({
+          id: String(item.id),
+          label: item.label,
+          icon: item.icon,
+          url: item.url.startsWith("http") 
+            ? item.url 
+            : `https://qmenlmdjfxctqmgyrpka.supabase.co/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`
+        }))
+        setAmbienceList(formatted)
+      }
+    }
+    fetchAmbience()
+  }, [])
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const { playSfx } = useSoundEffects(sfxList)
+  const { updateAmbience } = useAmbience(ambienceList)
 
   // Handler para SongItem con lógica de favoritos
   const handleSongClick = (song: Song) => {
@@ -177,6 +199,8 @@ function App() {
   const onSyncEvent = useCallback((event: SyncEvent) => {
     if (event.action === "play_sfx" && event.sfxId) {
       playSfx(event.sfxId)
+    } else if (event.action === "ambience_update" && event.ambienceId) {
+      updateAmbience(event.ambienceId, event.isPlaying || false, event.volume || 0, event.loop || false)
     } else if (event.action === "play") {
       const song = songs.find(s => String(s.id) === event.songId)
       if (song) setSelectedSong(song)
@@ -203,7 +227,7 @@ function App() {
         currentTimeRef.current = event.currentTime
       }
     }
-  }, [songs, playSfx])
+  }, [songs, playSfx, updateAmbience])
 
   const { sendSyncEvent, users } = useSyncRoom({ 
     roomId, 
@@ -316,6 +340,24 @@ function App() {
     })
   }
 
+  // Handler para Ambientes (Host)
+  const handleAmbienceChange = (id: string, isPlaying: boolean, volume: number, loop: boolean) => {
+    if (!isHost) return
+    // Reproducir localmente
+    updateAmbience(id, isPlaying, volume, loop)
+    // Enviar evento a la sala
+    sendSyncEvent({
+      action: "ambience_update",
+      songId: "ambience", // Dummy ID
+      currentTime: 0,
+      timestamp: Date.now(),
+      ambienceId: id,
+      isPlaying,
+      volume,
+      loop
+    })
+  }
+
   // Persistir estado del Host para recuperación tras refresh
   useEffect(() => {
     if (isHost && selectedSong) {
@@ -404,7 +446,13 @@ function App() {
         setUserName={setUserName}
       />
       
-      <Soundboard isHost={isHost} onPlaySfx={handlePlaySfx} sounds={sfxList} />
+      <Soundboard 
+        isHost={isHost} 
+        onPlaySfx={handlePlaySfx} 
+        sounds={sfxList}
+        ambienceTracks={ambienceList}
+        onAmbienceChange={handleAmbienceChange}
+      />
 
       <Player
         song={selectedSong ? {

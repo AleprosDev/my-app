@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react"
-import { Volume2, Zap, Shield, Skull, DoorOpen, CloudRain, Wind, Flame, Music } from "lucide-react"
+import { Volume2, Zap, Shield, Skull, DoorOpen, CloudRain, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
+import { AmbienceTrack } from "../lib/useAmbience"
 
 export type SfxItem = {
   id: string
@@ -24,11 +25,39 @@ type SoundboardProps = {
   isHost: boolean
   onPlaySfx: (sfxId: string) => void
   sounds: SfxItem[]
+  ambienceTracks: AmbienceTrack[]
+  onAmbienceChange: (id: string, isPlaying: boolean, volume: number, loop: boolean) => void
 }
 
-const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds }) => {
+const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambienceTracks, onAmbienceChange }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const [volume, setVolume] = useState(50)
+  const [activeTab, setActiveTab] = useState<"sfx" | "ambience">("sfx")
+  const [sfxVolume, setSfxVolume] = useState(50)
+  
+  // Estado local para controles de ambiente (para feedback inmediato)
+  const [ambienceState, setAmbienceState] = useState<Record<string, { isPlaying: boolean, volume: number, loop: boolean }>>({})
+
+  const handleAmbienceToggle = (track: AmbienceTrack) => {
+    const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
+    const newState = { ...current, isPlaying: !current.isPlaying }
+    setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
+    onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
+  }
+
+  const handleAmbienceVolume = (track: AmbienceTrack, vol: number) => {
+    const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
+    const newState = { ...current, volume: vol }
+    setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
+    // Debounce o enviar directo? Directo por ahora, optimizar si es lento
+    onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
+  }
+
+  const handleAmbienceLoop = (track: AmbienceTrack) => {
+    const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
+    const newState = { ...current, loop: !current.loop }
+    setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
+    onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
+  }
   
   // Si no es host, no mostramos nada (o podríamos mostrarlo deshabilitado)
   if (!isHost) return null
@@ -43,59 +72,121 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds }) =>
             ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
         }`}
-        title="Abrir Soundboard"
+        title="Abrir Panel DM"
       >
-        <Zap size={24} />
+        {activeTab === "sfx" ? <Zap size={24} /> : <Sliders size={24} />}
       </button>
 
       {/* Panel lateral del Soundboard */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-64 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 overflow-y-auto backdrop-blur-sm ${
+        className={`fixed right-0 top-0 bottom-0 w-72 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 overflow-y-auto backdrop-blur-sm ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <h3 className="text-xl font-bold text-rpg-light mb-4 flex items-center gap-2">
-          <Zap className="text-rpg-primary" />
-          Efectos (SFX)
-        </h3>
-
-        {/* Control de Volumen SFX */}
-        <div className="mb-6 bg-rpg-secondary/20 p-3 rounded-lg border border-rpg-light/10">
-          <div className="flex items-center gap-2 mb-2 text-rpg-light/80 text-sm">
-            <Volume2 size={16} />
-            <span>Volumen SFX</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={volume}
-            onChange={(e) => setVolume(Number(e.target.value))}
-            className="w-full h-1 bg-rpg-secondary/50 rounded-lg appearance-none cursor-pointer accent-rpg-primary"
-          />
+        <div className="flex gap-2 mb-6 border-b border-rpg-light/20 pb-2">
+          <button 
+            onClick={() => setActiveTab("sfx")}
+            className={`flex-1 pb-2 text-sm font-bold transition-colors ${activeTab === "sfx" ? "text-rpg-primary border-b-2 border-rpg-primary" : "text-rpg-light/50 hover:text-rpg-light"}`}
+          >
+            Efectos (SFX)
+          </button>
+          <button 
+            onClick={() => setActiveTab("ambience")}
+            className={`flex-1 pb-2 text-sm font-bold transition-colors ${activeTab === "ambience" ? "text-rpg-primary border-b-2 border-rpg-primary" : "text-rpg-light/50 hover:text-rpg-light"}`}
+          >
+            Ambiente
+          </button>
         </div>
 
-        {/* Grid de botones */}
-        <div className="grid grid-cols-2 gap-3">
-          {sounds.map((sfx) => {
-            const Icon = ICON_MAP[sfx.icon] || ICON_MAP.default
-            return (
-              <button
-                key={sfx.id}
-                onClick={() => onPlaySfx(sfx.id)}
-                className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group"
-              >
-                <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />
-                <span className="text-xs font-medium text-rpg-light group-hover:text-rpg-dark text-center">{sfx.label}</span>
-              </button>
-            )
-          })}
-          {sounds.length === 0 && (
-            <div className="col-span-2 text-center text-xs text-rpg-light/50 py-4">
-              No hay efectos cargados.
+        {activeTab === "sfx" && (
+          <>
+            {/* Control de Volumen SFX */}
+            <div className="mb-6 bg-rpg-secondary/20 p-3 rounded-lg border border-rpg-light/10">
+              <div className="flex items-center gap-2 mb-2 text-rpg-light/80 text-sm">
+                <Volume2 size={16} />
+                <span>Volumen SFX</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={sfxVolume}
+                onChange={(e) => setSfxVolume(Number(e.target.value))}
+                className="w-full h-1 bg-rpg-secondary/50 rounded-lg appearance-none cursor-pointer accent-rpg-primary"
+              />
             </div>
-          )}
-        </div>
+
+            {/* Grid de botones */}
+            <div className="grid grid-cols-2 gap-3">
+              {sounds.map((sfx) => {
+                const Icon = ICON_MAP[sfx.icon] || ICON_MAP.default
+                return (
+                  <button
+                    key={sfx.id}
+                    onClick={() => onPlaySfx(sfx.id)}
+                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group"
+                  >
+                    <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />
+                    <span className="text-xs font-medium text-rpg-light group-hover:text-rpg-dark text-center">{sfx.label}</span>
+                  </button>
+                )
+              })}
+              {sounds.length === 0 && (
+                <div className="col-span-2 text-center text-xs text-rpg-light/50 py-4">
+                  No hay efectos cargados.
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === "ambience" && (
+          <div className="space-y-4">
+            {ambienceTracks.map(track => {
+              const state = ambienceState[track.id] || { isPlaying: false, volume: 50 }
+              const Icon = ICON_MAP[track.icon] || ICON_MAP.default
+              return (
+                <div key={track.id} className="bg-rpg-secondary/20 p-3 rounded-lg border border-rpg-light/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Icon size={18} className="text-rpg-primary" />
+                      <span className="text-sm font-bold text-rpg-light">{track.label}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleAmbienceLoop(track)}
+                        className={`p-1 rounded-full transition-colors ${state.loop ? "text-rpg-primary" : "text-rpg-light/30 hover:text-rpg-light/70"}`}
+                        title={state.loop ? "Desactivar bucle" : "Activar bucle"}
+                      >
+                        <Repeat size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleAmbienceToggle(track)}
+                        className={`p-1 rounded-full transition-colors ${state.isPlaying ? "bg-rpg-primary text-rpg-dark" : "bg-rpg-dark text-rpg-light border border-rpg-light/20"}`}
+                      >
+                        {state.isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={state.volume}
+                    onChange={(e) => handleAmbienceVolume(track, Number(e.target.value))}
+                    className="w-full h-1 bg-rpg-secondary/50 rounded-lg appearance-none cursor-pointer accent-rpg-primary"
+                    disabled={!state.isPlaying}
+                  />
+                </div>
+              )
+            })}
+            {ambienceTracks.length === 0 && (
+              <div className="text-center text-xs text-rpg-light/50 py-4">
+                No hay pistas de ambiente cargadas.
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-8 text-xs text-rpg-light/40 text-center">
           Los sonidos se reproducirán para todos los usuarios conectados.
