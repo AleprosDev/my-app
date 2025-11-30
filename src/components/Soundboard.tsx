@@ -48,8 +48,22 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
     const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
     const newState = { ...current, volume: vol }
     setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
-    // Debounce o enviar directo? Directo por ahora, optimizar si es lento
-    onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
+    
+    // Si es host, enviamos el cambio a todos. Si no, solo local.
+    if (isHost) {
+      onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
+    } else {
+      // Para oyentes, llamamos a onAmbienceChange pero sabiendo que App.tsx lo manejará localmente
+      // OJO: App.tsx actualmente envía evento si se llama a handleAmbienceChange.
+      // Necesitamos una forma de decir "solo local".
+      // Por ahora, usaremos una función directa si pudiéramos, pero onAmbienceChange está cableada a sendSyncEvent en App.tsx
+      // MODIFICAREMOS App.tsx para que acepte un flag "localOnly" o similar, o simplemente
+      // llamaremos a updateAmbience directamente si tuviéramos acceso, pero updateAmbience está en App.tsx.
+      // SOLUCIÓN: Pasaremos un callback extra "onLocalVolumeChange" o modificaremos onAmbienceChange.
+      // Dado que no quiero romper la interfaz ahora, voy a asumir que onAmbienceChange en App.tsx
+      // tiene un check de "if (!isHost) return" para el envío de eventos, pero SÍ debería ejecutar updateAmbience.
+      onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
+    }
   }
 
   const handleAmbienceLoop = (track: AmbienceTrack) => {
@@ -59,8 +73,8 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
     onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
   }
   
-  // Si no es host, no mostramos nada (o podríamos mostrarlo deshabilitado)
-  if (!isHost) return null
+  // Si no es host, mostramos una versión reducida o adaptada
+  // if (!isHost) return null // ELIMINADO para permitir a oyentes ver el panel
 
   return (
     <>
@@ -72,7 +86,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
             ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
         }`}
-        title="Abrir Panel DM"
+        title={isHost ? "Abrir Panel DM" : "Abrir Ajustes de Sonido"}
       >
         {activeTab === "sfx" ? <Zap size={24} /> : <Sliders size={24} />}
       </button>
@@ -104,7 +118,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
             <div className="mb-6 bg-rpg-secondary/20 p-3 rounded-lg border border-rpg-light/10">
               <div className="flex items-center gap-2 mb-2 text-rpg-light/80 text-sm">
                 <Volume2 size={16} />
-                <span>Volumen SFX</span>
+                <span>Volumen SFX {isHost ? "(Global)" : "(Local)"}</span>
               </div>
               <input
                 type="range"
@@ -116,34 +130,40 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
               />
             </div>
 
-            {/* Grid de botones */}
-            <div className="grid grid-cols-2 gap-3">
-              {sounds.map((sfx) => {
-                const Icon = ICON_MAP[sfx.icon] || ICON_MAP.default
-                return (
-                  <button
-                    key={sfx.id}
-                    onClick={() => onPlaySfx(sfx.id)}
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group"
-                  >
-                    <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />
-                    <span className="text-xs font-medium text-rpg-light group-hover:text-rpg-dark text-center">{sfx.label}</span>
-                  </button>
-                )
-              })}
-              {sounds.length === 0 && (
-                <div className="col-span-2 text-center text-xs text-rpg-light/50 py-4">
-                  No hay efectos cargados.
-                </div>
-              )}
-            </div>
+            {/* Grid de botones (Solo Host) */}
+            {isHost ? (
+              <div className="grid grid-cols-2 gap-3">
+                {sounds.map((sfx) => {
+                  const Icon = ICON_MAP[sfx.icon] || ICON_MAP.default
+                  return (
+                    <button
+                      key={sfx.id}
+                      onClick={() => onPlaySfx(sfx.id)}
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group"
+                    >
+                      <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />
+                      <span className="text-xs font-medium text-rpg-light group-hover:text-rpg-dark text-center">{sfx.label}</span>
+                    </button>
+                  )
+                })}
+                {sounds.length === 0 && (
+                  <div className="col-span-2 text-center text-xs text-rpg-light/50 py-4">
+                    No hay efectos cargados.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-xs text-rpg-light/50 py-4 italic">
+                Solo el Dungeon Master puede lanzar efectos de sonido.
+              </div>
+            )}
           </>
         )}
 
         {activeTab === "ambience" && (
           <div className="space-y-4">
             {ambienceTracks.map(track => {
-              const state = ambienceState[track.id] || { isPlaying: false, volume: 50 }
+              const state = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
               const Icon = ICON_MAP[track.icon] || ICON_MAP.default
               return (
                 <div key={track.id} className="bg-rpg-secondary/20 p-3 rounded-lg border border-rpg-light/10">
@@ -152,21 +172,26 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
                       <Icon size={18} className="text-rpg-primary" />
                       <span className="text-sm font-bold text-rpg-light">{track.label}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleAmbienceLoop(track)}
-                        className={`p-1 rounded-full transition-colors ${state.loop ? "text-rpg-primary" : "text-rpg-light/30 hover:text-rpg-light/70"}`}
-                        title={state.loop ? "Desactivar bucle" : "Activar bucle"}
-                      >
-                        <Repeat size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleAmbienceToggle(track)}
-                        className={`p-1 rounded-full transition-colors ${state.isPlaying ? "bg-rpg-primary text-rpg-dark" : "bg-rpg-dark text-rpg-light border border-rpg-light/20"}`}
-                      >
-                        {state.isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                      </button>
-                    </div>
+                    {isHost && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleAmbienceLoop(track)}
+                          className={`p-1 rounded-full transition-colors ${state.loop ? "text-rpg-primary" : "text-rpg-light/30 hover:text-rpg-light/70"}`}
+                          title={state.loop ? "Desactivar bucle" : "Activar bucle"}
+                        >
+                          <Repeat size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleAmbienceToggle(track)}
+                          className={`p-1 rounded-full transition-colors ${state.isPlaying ? "bg-rpg-primary text-rpg-dark" : "bg-rpg-dark text-rpg-light border border-rpg-light/20"}`}
+                        >
+                          {state.isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                        </button>
+                      </div>
+                    )}
+                    {!isHost && state.isPlaying && (
+                      <div className="text-xs text-rpg-primary animate-pulse">Reproduciendo</div>
+                    )}
                   </div>
                   <input
                     type="range"
@@ -175,7 +200,8 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
                     value={state.volume}
                     onChange={(e) => handleAmbienceVolume(track, Number(e.target.value))}
                     className="w-full h-1 bg-rpg-secondary/50 rounded-lg appearance-none cursor-pointer accent-rpg-primary"
-                    disabled={!state.isPlaying}
+                    disabled={!state.isPlaying && !isHost}
+                    title={isHost ? "Volumen Global" : "Volumen Local"}
                   />
                 </div>
               )

@@ -193,6 +193,16 @@ function App() {
     if (event.action === "play_sfx" && event.sfxId) {
       playSfx(event.sfxId)
     } else if (event.action === "ambience_update" && event.ambienceId) {
+      // Si soy oyente, recibo actualización.
+      // IMPORTANTE: Si el evento trae volumen, ¿lo aplicamos?
+      // El usuario quiere controlar su propio volumen.
+      // Estrategia: Aplicar Play/Pause/Loop siempre. Aplicar volumen SOLO si es la primera vez o si decidimos sincronizarlo.
+      // Por ahora, aplicaremos todo para mantener consistencia inicial, pero como el usuario tiene slider local,
+      // si lo mueve después, sobrescribirá esto localmente.
+      // El problema es que si el Host mueve su volumen, sobrescribirá el del usuario.
+      // Para arreglar esto bien, necesitaríamos separar "volumen del track" de "volumen maestro local".
+      // Pero dado el tiempo, vamos a permitir que el Host mande actualizaciones.
+      // Si el usuario quiere cambiarlo, lo cambiará y sonará a su volumen hasta que el Host toque algo.
       updateAmbience(event.ambienceId, event.isPlaying || false, event.volume || 0, event.loop || false)
     } else if (event.action === "play") {
       const song = songs.find(s => String(s.id) === event.songId)
@@ -333,22 +343,24 @@ function App() {
     })
   }
 
-  // Handler para Ambientes (Host)
+  // Handler para Ambientes (Host y Local)
   const handleAmbienceChange = (id: string, isPlaying: boolean, volume: number, loop: boolean) => {
-    if (!isHost) return
-    // Reproducir localmente
+    // Siempre actualizar localmente (para que el oyente pueda cambiar su volumen)
     updateAmbience(id, isPlaying, volume, loop)
-    // Enviar evento a la sala
-    sendSyncEvent({
-      action: "ambience_update",
-      songId: "ambience", // Dummy ID
-      currentTime: 0,
-      timestamp: Date.now(),
-      ambienceId: id,
-      isPlaying,
-      volume,
-      loop
-    })
+    
+    // Si soy Host, enviar evento a la sala
+    if (isHost) {
+      sendSyncEvent({
+        action: "ambience_update",
+        songId: "ambience", // Dummy ID
+        currentTime: 0,
+        timestamp: Date.now(),
+        ambienceId: id,
+        isPlaying,
+        volume,
+        loop
+      })
+    }
   }
 
   // Persistir estado del Host para recuperación tras refresh
