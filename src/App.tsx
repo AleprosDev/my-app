@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import Navbar from "./components/Navbar"
-import Container from "./components/Container"
-import SongList from "./components/SongList"
 import SearchBar from "./components/SearchBar"
 import Room from "./components/Room"
 import Player from "./components/Player"
@@ -27,7 +25,6 @@ function App() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [mounted, setMounted] = useState(false)
   
   const currentTimeRef = useRef(0)
   const lastSyncTimeRef = useRef(0)
@@ -105,7 +102,7 @@ function App() {
           return {
             ...song,
             audio_url: filename
-              ? `https://qmenlmdjfxctqmgyrpka.supabase.co/storage/v1/object/public/music/${filename.replace(/^\//, "")}`
+              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/music/${filename.replace(/^\//, "")}`
               : "",
           }
         })
@@ -127,13 +124,13 @@ function App() {
       }
       
       if (!error && data) {
-        const formattedSfx = data.map((item: any) => ({
+        const formattedSfx = data.map((item) => ({
           id: String(item.id),
           label: item.label,
           icon: item.icon,
           url: item.url.startsWith("http") 
             ? item.url 
-            : `https://qmenlmdjfxctqmgyrpka.supabase.co/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`
+            : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`
         }))
         setSfxList(formattedSfx)
       }
@@ -146,22 +143,18 @@ function App() {
     const fetchAmbience = async () => {
       const { data, error } = await supabase.from("ambience").select("*")
       if (!error && data) {
-        const formatted = data.map((item: any) => ({
+        const formatted = data.map((item) => ({
           id: String(item.id),
           label: item.label,
           icon: item.icon,
           url: item.url.startsWith("http") 
             ? item.url 
-            : `https://qmenlmdjfxctqmgyrpka.supabase.co/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`
+            : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`
         }))
         setAmbienceList(formatted)
       }
     }
     fetchAmbience()
-  }, [])
-
-  useEffect(() => {
-    setMounted(true)
   }, [])
 
   const { playSfx } = useSoundEffects(sfxList)
