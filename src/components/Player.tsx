@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react"
-import Image from "next/image"
+import { Play, Pause, Volume2, VolumeX } from "lucide-react"
 
 type PlayerProps = {
   song: {
@@ -12,6 +12,10 @@ type PlayerProps = {
   isPlaying: boolean
   progress: number
   onSliderChange: (value: number) => void
+  onTimeUpdate?: (currentTime: number) => void
+  onPlay?: () => void
+  onPause?: () => void
+  isHost?: boolean
 }
 
 const getDurationSeconds = (duration: string) => {
@@ -24,13 +28,25 @@ const Player: React.FC<PlayerProps> = ({
   isPlaying,
   progress,
   onSliderChange,
+  onTimeUpdate,
+  onPlay,
+  onPause,
+  isHost = false,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [canPlay, setCanPlay] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
   const [localProgress, setLocalProgress] = useState(0)
   const [isSeeking, setIsSeeking] = useState(false)
-  const [volume, setVolume] = useState(80) // Volumen local, 80% por defecto
+  const [volume, setVolume] = useState(() => {
+    const stored = localStorage.getItem("music_volume")
+    return stored ? Number(stored) : 80
+  }) // Volumen local, 80% por defecto
+
+  // Persistir volumen
+  useEffect(() => {
+    localStorage.setItem("music_volume", String(volume))
+  }, [volume])
 
   useEffect(() => {
     setCanPlay(false)
@@ -53,7 +69,11 @@ const Player: React.FC<PlayerProps> = ({
   // Actualizar el slider local solo con el avance natural del audio
   const handleAudioTimeUpdate = () => {
     if (audioRef.current && !isSeeking) {
-      setLocalProgress(Math.floor(audioRef.current.currentTime))
+      const currentTime = audioRef.current.currentTime
+      setLocalProgress(Math.floor(currentTime))
+      if (onTimeUpdate) {
+        onTimeUpdate(currentTime)
+      }
     }
   }
 
@@ -155,13 +175,27 @@ const Player: React.FC<PlayerProps> = ({
     step()
   }
 
+  const [needsInteraction, setNeedsInteraction] = useState(false)
+
   // Controlar play/pause con fades
   useEffect(() => {
     if (!audioRef.current || !canPlay) return
     if (isPlaying) {
-      audioRef.current.play().then(() => {
-        fadeIn(volume / 100)
-      }).catch(() => {})
+      const playPromise = audioRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setNeedsInteraction(false)
+            fadeIn(volume / 100)
+          })
+          .catch((error) => {
+            console.error("Error al reproducir:", error)
+            // Si el error es NotAllowedError, necesitamos interacción del usuario
+            if (error.name === "NotAllowedError") {
+              setNeedsInteraction(true)
+            }
+          })
+      }
     } else {
       fadeOut(() => {
         if (audioRef.current) {
@@ -196,22 +230,41 @@ const Player: React.FC<PlayerProps> = ({
 
   // Solo renderizar si song tiene todos los campos requeridos
   if (!song || !song.title || !song.artist || !song.duration || !song.cover_url || !song.audio_url) {
-    return <div className="text-center text-gray-500 py-8">Selecciona una canción para comenzar</div>;
+    return <div className="text-center text-rpg-light/50 py-8">Selecciona una canción para comenzar</div>;
   }
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 bg-white border-t shadow-lg px-4 py-3 flex items-center z-50">
-      <Image
+    <div className="fixed left-0 right-0 bottom-0 bg-rpg-dark border-t-4 border-rpg-accent shadow-lg px-4 py-3 flex items-center z-50 gap-4">
+      <img
         src={song.cover_url}
         alt={song.title}
         width={48}
         height={48}
-        className="h-12 w-12 rounded mr-4 object-cover"
-        unoptimized
+        className="h-12 w-12 rounded object-cover border border-rpg-light/20"
       />
-      <div className="flex-1">
-        <div className="font-semibold">{song.title}</div>
-        <div className="text-sm text-gray-500">{song.artist}</div>
+      
+      {/* Controles de Play/Pause para el Host */}
+      {isHost && (
+        <button
+          onClick={isPlaying ? onPause : onPlay}
+          className="p-3 rounded-full bg-rpg-primary text-rpg-dark hover:bg-rpg-light transition shadow-md flex-shrink-0 border-2 border-rpg-light/10"
+          title={isPlaying ? "Pausar" : "Reproducir"}
+        >
+          {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+        </button>
+      )}
+
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-baseline">
+          <div className="truncate pr-2">
+            <span className="font-semibold text-rpg-light">{song.title}</span>
+            <span className="text-sm text-rpg-primary ml-2">{song.artist}</span>
+          </div>
+          <div className="text-xs text-rpg-light/60 whitespace-nowrap">
+            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")} / {song.duration}
+          </div>
+        </div>
+        
         <input
           type="range"
           min={0}
@@ -220,14 +273,10 @@ const Player: React.FC<PlayerProps> = ({
           onChange={handleSliderChange}
           onMouseUp={handleSliderCommit}
           onTouchEnd={handleSliderCommit}
-          className="w-full mt-2"
+          className="w-full mt-1 h-1 bg-rpg-secondary/30 rounded-lg appearance-none cursor-pointer accent-rpg-primary"
+          disabled={!isHost} // Solo el host puede hacer seek
         />
-        <div className="text-xs text-gray-400 flex justify-between">
-          <span>
-            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")}
-          </span>
-          <span>{song.duration}</span>
-        </div>
+        
         <audio
           ref={audioRef}
           src={song.audio_url}
@@ -238,24 +287,42 @@ const Player: React.FC<PlayerProps> = ({
           onError={handleAudioError}
           loop
         />
-        <div className="flex items-center mt-2">
+        
+        <div className="flex items-center mt-1 gap-2">
+          <Volume2 size={16} className="text-rpg-light/70" />
           <input
             type="range"
             min={0}
             max={100}
             value={volume}
             onChange={e => setVolume(Number(e.target.value))}
-            className="w-24 mr-2 align-middle"
+            className="w-24 h-1 bg-rpg-secondary/30 rounded-lg appearance-none cursor-pointer accent-rpg-light"
             aria-label="Volumen"
           />
-          <span className="text-xs text-gray-500">{volume}%</span>
+          
+          {!canPlay && !audioError && (
+            <span className="text-rpg-primary text-xs ml-2 animate-pulse font-bold">Cargando...</span>
+          )}
+          {needsInteraction && (
+            <button 
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.play()
+                    .then(() => setNeedsInteraction(false))
+                    .catch(console.error)
+                }
+              }}
+              className="ml-2 bg-rpg-accent text-white text-xs px-2 py-1 rounded animate-pulse hover:bg-rpg-light hover:text-rpg-dark font-bold"
+            >
+              ¡Click para activar sonido!
+            </button>
+          )}
+          {audioError && (
+            <span className="text-red-400 text-xs ml-2 truncate" title={audioError}>
+              Error: {audioError}
+            </span>
+          )}
         </div>
-        {!canPlay && !audioError && (
-          <div className="text-blue-600 text-xs mt-2">Cargando audio completo...</div>
-        )}
-        {audioError && (
-          <div className="text-red-600 text-xs mt-2">{audioError}</div>
-        )}
       </div>
     </div>
   )

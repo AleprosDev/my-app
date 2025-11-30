@@ -9,18 +9,18 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: "rock", name: "Rock" },
-    { id: "pop", name: "Pop" },
-    { id: "jazz", name: "Jazz" },
-    { id: "electronic", name: "Electrónica" },
+    { id: "medieval", name: "Medieval" },
+    { id: "scifi", name: "Sci-Fi" },
+    { id: "modern", name: "Modern" },
+    { id: "horror", name: "Horror" },
   ]
 
   return (
-    <nav className="bg-purple-700 text-white shadow-md">
+    <nav className="bg-rpg-dark text-white shadow-md border-b-4 border-rpg-accent">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <h1 className="text-xl font-bold">MusicApp</h1>
+            <h1 className="text-xl font-bold text-rpg-light">Bard's Tavern</h1>
           </div>
 
           <div className="hidden md:block">
@@ -28,8 +28,8 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === tab.id ? "bg-purple-900 text-white" : "text-purple-100 hover:bg-purple-600"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab.id ? "bg-rpg-accent text-rpg-dark font-bold" : "text-rpg-light hover:bg-rpg-secondary hover:text-white"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
@@ -42,13 +42,13 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
       </div>
 
       {/* Mobile menu */}
-      <div className="md:hidden">
+      <div className="md:hidden bg-rpg-dark">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
-                activeTab === tab.id ? "bg-purple-900 text-white" : "text-purple-100 hover:bg-purple-600"
+                activeTab === tab.id ? "bg-rpg-accent text-rpg-dark" : "text-rpg-light hover:bg-rpg-secondary"
               }`}
               onClick={() => setActiveTab(tab.id)}
             >
