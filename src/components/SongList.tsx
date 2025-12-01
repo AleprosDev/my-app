@@ -6,9 +6,11 @@ type SongListProps = {
   songs: Song[]
   onSongClick?: (song: Song) => void
   onToggleFavorite?: (song: Song) => void
+  currentSong?: Song | null
+  isPlaying?: boolean
 }
 
-const SongList: React.FC<SongListProps> = ({ songs, onSongClick, onToggleFavorite }) => {
+const SongList: React.FC<SongListProps> = ({ songs, onSongClick, onToggleFavorite, currentSong, isPlaying }) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
       {songs.map((song) => (
@@ -17,6 +19,8 @@ const SongList: React.FC<SongListProps> = ({ songs, onSongClick, onToggleFavorit
           song={song}
           onClick={() => onSongClick?.(song)}
           onToggleFavorite={onToggleFavorite}
+          isActive={currentSong?.id === song.id}
+          isPlaying={isPlaying && currentSong?.id === song.id}
         />
       ))}
     </div>

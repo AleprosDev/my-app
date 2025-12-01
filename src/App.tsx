@@ -447,7 +447,14 @@ function App() {
           </button>
         </div>
         {/* Rutas principales de canciones */}
-        <SongRoutes songs={songs} favorites={favorites} toggleFavorite={toggleFavorite} onSongClick={handleSongClick} />
+        <SongRoutes 
+          songs={songs} 
+          favorites={favorites} 
+          toggleFavorite={toggleFavorite} 
+          onSongClick={handleSongClick}
+          currentSong={selectedSong}
+          isPlaying={isPlaying}
+        />
       </main>
 
       <Room

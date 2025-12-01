@@ -4,11 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-rpg-primary: #53c57f;
-  --color-rpg-secondary: #64a25f;
-  --color-rpg-dark: #5e6a0a;
-  --color-rpg-accent: #979311;
-  --color-rpg-light: #f6ff7e;
+  --color-rpg-primary: #8fb339;
+  --color-rpg-secondary: #4a5d23;
+  --color-rpg-dark: #2f3e10;
+  --color-rpg-accent: #d4ff5f;
+  --color-rpg-light: #f0f7d4;
+  --color-rpg-card: #3a4a1a;
+  --color-rpg-card-hover: #4a5d23;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
