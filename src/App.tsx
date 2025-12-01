@@ -440,7 +440,7 @@ function App() {
         <div className="flex gap-2 mb-6">
           {/* Botón de favoritos */}
           <button
-            className="px-3 py-1 rounded bg-rpg-accent text-white hover:bg-rpg-light hover:text-rpg-dark transition font-bold border border-rpg-light/20"
+            className="px-3 py-1 rounded bg-rpg-accent text-black hover:bg-rpg-light hover:text-rpg-dark transition font-bold border border-rpg-light/20"
             onClick={handleFavoritesClick}
           >
             ★ Favoritos
