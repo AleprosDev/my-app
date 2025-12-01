@@ -27,41 +27,32 @@ type SoundboardProps = {
   sounds: SfxItem[]
   ambienceTracks: AmbienceTrack[]
   onAmbienceChange: (id: string, isPlaying: boolean, volume: number, loop: boolean) => void
+  ambienceState: Record<string, { isPlaying: boolean, volume: number, loop: boolean }>
 }
 
-const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambienceTracks, onAmbienceChange }) => {
+const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambienceTracks, onAmbienceChange, ambienceState }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"sfx" | "ambience">("sfx")
   const [sfxVolume, setSfxVolume] = useState(50)
   
-  // Estado local para controles de ambiente (para feedback inmediato)
-  const [ambienceState, setAmbienceState] = useState<Record<string, { isPlaying: boolean, volume: number, loop: boolean }>>({})
+  // Estado local eliminado, usamos props
 
   const handleAmbienceToggle = (track: AmbienceTrack) => {
     const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
     const newState = { ...current, isPlaying: !current.isPlaying }
-    setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
+    // setAmbienceState(prev => ({ ...prev, [track.id]: newState })) // Eliminado
     onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
   }
 
   const handleAmbienceVolume = (track: AmbienceTrack, vol: number) => {
     const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
     const newState = { ...current, volume: vol }
-    setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
+    // setAmbienceState(prev => ({ ...prev, [track.id]: newState })) // Eliminado
     
     // Si es host, enviamos el cambio a todos. Si no, solo local.
     if (isHost) {
       onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
     } else {
-      // Para oyentes, llamamos a onAmbienceChange pero sabiendo que App.tsx lo manejará localmente
-      // OJO: App.tsx actualmente envía evento si se llama a handleAmbienceChange.
-      // Necesitamos una forma de decir "solo local".
-      // Por ahora, usaremos una función directa si pudiéramos, pero onAmbienceChange está cableada a sendSyncEvent en App.tsx
-      // MODIFICAREMOS App.tsx para que acepte un flag "localOnly" o similar, o simplemente
-      // llamaremos a updateAmbience directamente si tuviéramos acceso, pero updateAmbience está en App.tsx.
-      // SOLUCIÓN: Pasaremos un callback extra "onLocalVolumeChange" o modificaremos onAmbienceChange.
-      // Dado que no quiero romper la interfaz ahora, voy a asumir que onAmbienceChange en App.tsx
-      // tiene un check de "if (!isHost) return" para el envío de eventos, pero SÍ debería ejecutar updateAmbience.
       onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
     }
   }
@@ -69,7 +60,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
   const handleAmbienceLoop = (track: AmbienceTrack) => {
     const current = ambienceState[track.id] || { isPlaying: false, volume: 50, loop: false }
     const newState = { ...current, loop: !current.loop }
-    setAmbienceState(prev => ({ ...prev, [track.id]: newState }))
+    // setAmbienceState(prev => ({ ...prev, [track.id]: newState })) // Eliminado
     onAmbienceChange(track.id, newState.isPlaying, newState.volume, newState.loop)
   }
   

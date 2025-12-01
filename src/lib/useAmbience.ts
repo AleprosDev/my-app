@@ -29,19 +29,54 @@ export const useAmbience = (tracks: AmbienceTrack[]) => {
     const audio = audioRefs.current[id]
     if (!audio) return
 
-    // Ajustar volumen (0-1)
-    audio.volume = Math.max(0, Math.min(1, volume / 100))
+    const targetVolume = Math.max(0, Math.min(1, volume / 100))
     audio.loop = loop
 
     if (isPlaying) {
       if (audio.paused) {
+        audio.volume = 0
         audio.play().catch(e => console.error("Error playing ambience:", e))
+        // Fade In
+        fadeIn(audio, targetVolume)
+      } else {
+        // Si ya está sonando, solo ajustar volumen (con fade suave si cambia mucho?)
+        // Por ahora ajuste directo o suave
+        audio.volume = targetVolume
       }
     } else {
       if (!audio.paused) {
-        audio.pause()
+        // Fade Out y luego pause
+        fadeOut(audio, () => audio.pause())
       }
     }
+  }
+
+  const fadeIn = (audio: HTMLAudioElement, targetVol: number) => {
+    let vol = 0
+    audio.volume = vol
+    const interval = setInterval(() => {
+      if (vol < targetVol) {
+        vol += 0.05
+        if (vol > targetVol) vol = targetVol
+        audio.volume = vol
+      } else {
+        clearInterval(interval)
+      }
+    }, 100)
+  }
+
+  const fadeOut = (audio: HTMLAudioElement, onComplete: () => void) => {
+    let vol = audio.volume
+    const interval = setInterval(() => {
+      if (vol > 0) {
+        vol -= 0.05
+        if (vol < 0) vol = 0
+        audio.volume = vol
+      } else {
+        clearInterval(interval)
+        onComplete()
+      }
+    }, 100)
   }
 
   return { updateAmbience }

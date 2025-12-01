@@ -26,6 +26,15 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   
+  // Estado de ambiente (Lifted state)
+  const [ambienceState, setAmbienceState] = useState<Record<string, { isPlaying: boolean, volume: number, loop: boolean }>>({})
+  const ambienceStateRef = useRef<Record<string, { isPlaying: boolean, volume: number, loop: boolean }>>({})
+
+  // Mantener ref sincronizado
+  useEffect(() => {
+    ambienceStateRef.current = ambienceState
+  }, [ambienceState])
+  
   const currentTimeRef = useRef(0)
   const lastSyncTimeRef = useRef(0)
 
@@ -193,17 +202,21 @@ function App() {
     if (event.action === "play_sfx" && event.sfxId) {
       playSfx(event.sfxId)
     } else if (event.action === "ambience_update" && event.ambienceId) {
-      // Si soy oyente, recibo actualización.
-      // IMPORTANTE: Si el evento trae volumen, ¿lo aplicamos?
-      // El usuario quiere controlar su propio volumen.
-      // Estrategia: Aplicar Play/Pause/Loop siempre. Aplicar volumen SOLO si es la primera vez o si decidimos sincronizarlo.
-      // Por ahora, aplicaremos todo para mantener consistencia inicial, pero como el usuario tiene slider local,
-      // si lo mueve después, sobrescribirá esto localmente.
-      // El problema es que si el Host mueve su volumen, sobrescribirá el del usuario.
-      // Para arreglar esto bien, necesitaríamos separar "volumen del track" de "volumen maestro local".
-      // Pero dado el tiempo, vamos a permitir que el Host mande actualizaciones.
-      // Si el usuario quiere cambiarlo, lo cambiará y sonará a su volumen hasta que el Host toque algo.
-      updateAmbience(event.ambienceId, event.isPlaying || false, event.volume || 0, event.loop || false)
+      // Usar ref para obtener estado actual sin re-renderizar el callback
+      const currentLocal = ambienceStateRef.current[event.ambienceId]
+      // Mantener volumen local si existe, sino usar el del evento (inicial)
+      const newVolume = currentLocal ? currentLocal.volume : (event.volume || 50)
+      
+      setAmbienceState(prev => ({
+        ...prev,
+        [event.ambienceId!]: {
+          isPlaying: event.isPlaying || false,
+          volume: newVolume,
+          loop: event.loop || false
+        }
+      }))
+      
+      updateAmbience(event.ambienceId, event.isPlaying || false, newVolume, event.loop || false)
     } else if (event.action === "play") {
       const song = songs.find(s => String(s.id) === event.songId)
       if (song) setSelectedSong(song)
@@ -345,7 +358,13 @@ function App() {
 
   // Handler para Ambientes (Host y Local)
   const handleAmbienceChange = (id: string, isPlaying: boolean, volume: number, loop: boolean) => {
-    // Siempre actualizar localmente (para que el oyente pueda cambiar su volumen)
+    // Actualizar estado local (UI)
+    setAmbienceState(prev => ({
+      ...prev,
+      [id]: { isPlaying, volume, loop }
+    }))
+
+    // Siempre actualizar audio localmente
     updateAmbience(id, isPlaying, volume, loop)
     
     // Si soy Host, enviar evento a la sala
@@ -457,6 +476,7 @@ function App() {
         sounds={sfxList}
         ambienceTracks={ambienceList}
         onAmbienceChange={handleAmbienceChange}
+        ambienceState={ambienceState}
       />
 
       <Player
