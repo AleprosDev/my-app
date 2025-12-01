@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import Navbar from "./components/Navbar"
-import SearchBar from "./components/SearchBar"
 import Room from "./components/Room"
 import Player from "./components/Player"
 import { supabase } from "./lib/supabaseClient"
@@ -21,7 +20,6 @@ function App() {
   const [sfxList, setSfxList] = useState<SfxItem[]>([])
   const [ambienceList, setAmbienceList] = useState<AmbienceTrack[]>([])
   const [activeTab, setActiveTab] = useState("medieval")
-  const [search, setSearch] = useState("")
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -438,11 +436,6 @@ function App() {
       <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} />
       <main className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6 text-rpg-light">Mi Biblioteca Musical</h1>
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar canciones..."
-        />
         {/* Botones de acción */}
         <div className="flex gap-2 mb-6">
           {/* Botón de favoritos */}
