@@ -12,6 +12,7 @@ import SongRoutes from "./components/SongRoutes"
 import Soundboard, { useSoundEffects, SfxItem } from "./components/Soundboard"
 import { useAmbience, AmbienceTrack } from "./lib/useAmbience"
 import "../app/globals.css"
+import FeedbackForm from "./components/FeedbackForm"
 
 const DEFAULT_ROOM = "sala1"
 
@@ -491,6 +492,8 @@ function App() {
         onAmbienceChange={handleAmbienceChange}
         ambienceState={ambienceState}
       />
+
+      <FeedbackForm />
 
       <Player
         song={selectedSong ? {
