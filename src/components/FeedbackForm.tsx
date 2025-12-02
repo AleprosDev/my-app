@@ -1,25 +1,48 @@
 import React, { useState } from "react"
-import { HelpCircle, Send, X } from "lucide-react"
+import { HelpCircle, Send, X, Loader2 } from "lucide-react"
+import emailjs from '@emailjs/browser'
 
 const FeedbackForm: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [status, setStatus] = useState<{type: 'success' | 'error' | null, message: string}>({ type: null, message: '' })
+
   const [formData, setFormData] = useState({
     name: "",
     type: "duda",
     message: ""
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    const subject = `[Feedback - ${formData.type.toUpperCase()}] ${formData.name}`
-    const body = `Nombre: ${formData.name}%0D%0ATipo: ${formData.type}%0D%0A%0D%0AMensaje:%0D%0A${formData.message}`
-    
-    window.open(`mailto:alejandro.f.pros@gmail.com?subject=${subject}&body=${body}`, '_blank')
-    
-    // Opcional: limpiar formulario o cerrar
-    setIsOpen(false)
-    setFormData({ name: "", type: "duda", message: "" })
+    setIsSending(true)
+    setStatus({ type: null, message: '' })
+
+    // TODO: Reemplazar con tus credenciales de EmailJS (https://www.emailjs.com/)
+    const SERVICE_ID = "service_qs143fd" 
+    const TEMPLATE_ID = "template_fqr0vd6"
+    const PUBLIC_KEY = "0skFIRBOV3THs96_-"
+
+    const templateParams = {
+        from_name: formData.name || "Aventurero Anónimo",
+        type: formData.type,
+        message: formData.message,
+    }
+
+    try {
+        await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
+        setStatus({ type: 'success', message: '¡Mensaje enviado con éxito!' })
+        setFormData({ name: "", type: "duda", message: "" })
+        setTimeout(() => {
+            setIsOpen(false)
+            setStatus({ type: null, message: '' })
+        }, 3000)
+    } catch (error) {
+        console.error("Error al enviar email:", error)
+        setStatus({ type: 'error', message: 'Error al enviar. Intenta más tarde.' })
+    } finally {
+        setIsSending(false)
+    }
   }
 
   return (
@@ -91,16 +114,29 @@ const FeedbackForm: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full bg-rpg-accent text-rpg-dark font-bold py-2 rounded hover:bg-rpg-light transition-colors flex items-center justify-center gap-2 mt-4"
+            disabled={isSending}
+            className={`w-full font-bold py-2 rounded transition-colors flex items-center justify-center gap-2 mt-4 ${
+                isSending 
+                ? "bg-rpg-light/50 text-rpg-dark cursor-not-allowed" 
+                : "bg-rpg-accent text-rpg-dark hover:bg-rpg-light"
+            }`}
           >
-            <Send size={18} />
-            Enviar Correo
+            {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            {isSending ? "Enviando..." : "Enviar Mensaje"}
           </button>
         </form>
 
+        {status.message && (
+            <div className={`mt-4 p-3 rounded text-sm text-center ${
+                status.type === 'success' ? 'bg-green-500/20 text-green-200 border border-green-500/50' : 'bg-red-500/20 text-red-200 border border-red-500/50'
+            }`}>
+                {status.message}
+            </div>
+        )}
+
         <div className="mt-8 pt-4 border-t border-rpg-light/10 text-center">
           <p className="text-xs text-rpg-light/40">
-            Se abrirá tu cliente de correo predeterminado para enviar el mensaje a alejandro.f.pros@gmail.com
+            Powered by EmailJS
           </p>
         </div>
       </div>
