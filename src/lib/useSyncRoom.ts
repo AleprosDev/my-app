@@ -48,6 +48,12 @@ export function useSyncRoom({
   const channelRef = useRef<any>(null)
   const [users, setUsers] = useState<RoomUser[]>([])
 
+  // Mantener una referencia actualizada al callback de eventos para evitar closures obsoletos
+  const onEventRef = useRef(onEvent)
+  useEffect(() => {
+    onEventRef.current = onEvent
+  }, [onEvent])
+
   useEffect(() => {
     // Unirse al canal único de la sala (broadcast + presence)
     const channel = supabase.channel(`room:${roomId}`, {
@@ -61,7 +67,7 @@ export function useSyncRoom({
     // Escuchar eventos de sincronización
     channel.on('broadcast', { event: 'sync' }, (payload) => {
       if (payload.payload) {
-        onEvent(payload.payload as SyncEvent)
+        onEventRef.current(payload.payload as SyncEvent)
       }
     })
 
