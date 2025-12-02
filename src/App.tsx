@@ -58,7 +58,15 @@ function App() {
   }, [roomId, setSearchParams])
 
   // Modos de conexión: 'spectator' (default, local), 'listener' (synced), 'host' (controls room)
-  const [connectionMode, setConnectionMode] = useState<"spectator" | "listener" | "host">("spectator")
+  const [connectionMode, setConnectionMode] = useState<"spectator" | "listener" | "host">(() => {
+    const stored = localStorage.getItem("connection_mode")
+    return (stored === "host" || stored === "listener" || stored === "spectator") ? stored : "spectator"
+  })
+
+  // Persistir modo de conexión
+  useEffect(() => {
+    localStorage.setItem("connection_mode", connectionMode)
+  }, [connectionMode])
   
   const isHost = connectionMode === "host"
   const isListener = connectionMode === "listener"
