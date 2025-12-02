@@ -29,7 +29,7 @@ const SongRoutes: React.FC<{
       <Routes>
         <Route path="/" element={<div className="text-rpg-light text-center">Cargando...</div>} />
         <Route path="/song/:id" element={<SongDetail songs={songs} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} />} />
-        <Route path="/category/:id" element={<CategoryList songs={songs} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} currentSong={currentSong} isPlaying={isPlaying} />} />
+        <Route path="/category/:id" element={<CategoryList songs={songs} favorites={favorites} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} currentSong={currentSong} isPlaying={isPlaying} />} />
         <Route path="/favoritos" element={<FavoritesList songs={favorites} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} currentSong={currentSong} isPlaying={isPlaying} />} />
       </Routes>
     </div>

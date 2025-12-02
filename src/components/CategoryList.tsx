@@ -6,11 +6,12 @@ import SongList from "./SongList"
 // Recibe las canciones por props o contexto
 const CategoryList: React.FC<{ 
   songs: Song[], 
+  favorites?: Song[],
   onToggleFavorite?: (song: Song) => void, 
   onSongClick?: (song: Song) => void,
   currentSong?: Song | null,
   isPlaying?: boolean
-}> = ({ songs, onToggleFavorite, onSongClick, currentSong, isPlaying }) => {
+}> = ({ songs, favorites, onToggleFavorite, onSongClick, currentSong, isPlaying }) => {
   const { id } = useParams<{ id: string }>()
   // Filtra por género (no por category_id)
   const filtered = songs.filter(s => s.genre && s.genre.toLowerCase() === id?.toLowerCase())
@@ -38,6 +39,7 @@ const CategoryList: React.FC<{
 
       <SongList 
         songs={filtered} 
+        favorites={favorites}
         onToggleFavorite={onToggleFavorite} 
         onSongClick={onSongClick} 
         currentSong={currentSong}

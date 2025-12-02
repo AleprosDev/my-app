@@ -1,4 +1,5 @@
 import type React from "react"
+import { Star } from "lucide-react"
 import type { Song } from "../types"
 
 type SongItemProps = {
@@ -7,9 +8,10 @@ type SongItemProps = {
   onToggleFavorite?: (song: Song) => void
   isActive?: boolean
   isPlaying?: boolean
+  isFavorite?: boolean
 }
 
-const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, isActive, isPlaying }) => {
+const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, isActive, isPlaying, isFavorite = false }) => {
   return (
     <div 
       className={`
@@ -68,10 +70,15 @@ const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, is
         
         {onToggleFavorite && (
           <button
-            className="px-3 py-1 rounded-full text-xs font-bold bg-black/30 hover:bg-rpg-accent hover:text-rpg-dark text-rpg-light transition-all border border-white/10"
+            className={`p-2 rounded-full transition-all border ${
+              isFavorite 
+                ? "bg-rpg-accent text-rpg-dark border-rpg-accent hover:bg-rpg-light" 
+                : "bg-black/30 text-rpg-light/50 border-white/10 hover:text-rpg-accent hover:border-rpg-accent"
+            }`}
             onClick={e => { e.stopPropagation(); onToggleFavorite(song); }}
+            title={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
           >
-            Favoritos
+            <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
           </button>
         )}
       </div>

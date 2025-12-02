@@ -34,6 +34,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ songs, onToggleFavorite, 
 
       <SongList 
         songs={songs} 
+        favorites={songs}
         onToggleFavorite={onToggleFavorite} 
         onSongClick={onSongClick} 
         currentSong={currentSong}
