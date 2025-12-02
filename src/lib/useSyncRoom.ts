@@ -16,7 +16,7 @@ export type SyncEvent = {
 export type RoomUser = {
   id: string
   name: string
-  role: "host" | "listener"
+  role: "host" | "listener" | "spectator"
   // Estado del host para sincronización inicial
   hostState?: {
     songId: string
@@ -37,7 +37,7 @@ export function useSyncRoom({
   roomId: string
   userId: string
   name: string
-  role: "host" | "listener"
+  role: "host" | "listener" | "spectator"
   onEvent: (event: SyncEvent) => void
   hostState?: {
     songId: string

@@ -56,7 +56,13 @@ function App() {
     }, { replace: true })
   }, [roomId, setSearchParams])
 
-  const [isHost, setIsHost] = useState(false) // Por defecto oyente
+  // Modos de conexión: 'spectator' (default, local), 'listener' (synced), 'host' (controls room)
+  const [connectionMode, setConnectionMode] = useState<"spectator" | "listener" | "host">("spectator")
+  
+  const isHost = connectionMode === "host"
+  const isListener = connectionMode === "listener"
+  const isSpectator = connectionMode === "spectator"
+
   const [userName, setUserName] = useState(() => localStorage.getItem("room_user_name") || "")
   const [userId] = useState(() => {
     const stored = localStorage.getItem("room_user_id")
@@ -197,6 +203,8 @@ function App() {
 
   // Sincronización con Supabase
   const onSyncEvent = useCallback((event: SyncEvent) => {
+    if (isSpectator) return // Espectadores no reaccionan a eventos de sincronización
+
     if (event.action === "play_sfx" && event.sfxId) {
       playSfx(event.sfxId)
     } else if (event.action === "ambience_update" && event.ambienceId) {
@@ -241,13 +249,13 @@ function App() {
         currentTimeRef.current = event.currentTime
       }
     }
-  }, [songs, playSfx, updateAmbience])
+  }, [songs, playSfx, updateAmbience, isSpectator])
 
   const { sendSyncEvent, users } = useSyncRoom({ 
     roomId, 
     userId,
     name: userName,
-    role: isHost ? "host" : "listener",
+    role: connectionMode,
     onEvent: onSyncEvent,
     hostState: isHost && selectedSong ? {
       songId: String(selectedSong.id),
@@ -303,30 +311,33 @@ function App() {
     }
   }
 
-  // Handlers para el host
+  // Handlers para el host y espectadores
   const handlePlay = () => {
-    if (!isHost) return // Solo el host puede emitir
+    if (isListener) return // Listeners están sincronizados
     setIsPlaying(true)
-    if (!selectedSong) return;
-    sendSyncEvent({
-      action: "play",
-      songId: String(selectedSong.id),
-      currentTime: currentTimeRef.current,
-      timestamp: Date.now(),
-    })
+    if (isHost && selectedSong) {
+      sendSyncEvent({
+        action: "play",
+        songId: String(selectedSong.id),
+        currentTime: currentTimeRef.current,
+        timestamp: Date.now(),
+      })
+    }
   }
   const handlePause = () => {
-    if (!isHost) return // Solo el host puede emitir
+    if (isListener) return // Listeners están sincronizados
     setIsPlaying(false)
-    if (!selectedSong) return;
-    sendSyncEvent({
-      action: "pause",
-      songId: String(selectedSong.id),
-      currentTime: currentTimeRef.current,
-      timestamp: Date.now(),
-    })
+    if (isHost && selectedSong) {
+      sendSyncEvent({
+        action: "pause",
+        songId: String(selectedSong.id),
+        currentTime: currentTimeRef.current,
+        timestamp: Date.now(),
+      })
+    }
   }
   const handleSliderChange = (value: number) => {
+    if (isListener) return // Listeners no pueden hacer seek
     setProgress(value)
     currentTimeRef.current = value
     if (isHost && selectedSong) {
@@ -339,19 +350,21 @@ function App() {
     }
   }
 
-  // Handler para SFX (Host)
+  // Handler para SFX (Host y Spectator)
   const handlePlaySfx = (sfxId: string) => {
-    if (!isHost) return
+    if (isListener) return // Listeners no lanzan SFX
     // Reproducir localmente
     playSfx(sfxId)
-    // Enviar evento a la sala
-    sendSyncEvent({
-      action: "play_sfx",
-      songId: "sfx", // Dummy ID
-      currentTime: 0,
-      timestamp: Date.now(),
-      sfxId: sfxId
-    })
+    // Enviar evento a la sala solo si es Host
+    if (isHost) {
+      sendSyncEvent({
+        action: "play_sfx",
+        songId: "sfx", // Dummy ID
+        currentTime: 0,
+        timestamp: Date.now(),
+        sfxId: sfxId
+      })
+    }
   }
 
   // Handler para Ambientes (Host y Local)
@@ -440,7 +453,7 @@ function App() {
         <div className="flex gap-2 mb-6">
           {/* Botón de favoritos */}
           <button
-            className="px-3 py-1 rounded bg-rpg-accent text-black hover:bg-rpg-light hover:text-rpg-dark transition font-bold border border-rpg-light/20"
+            className="px-3 py-1 rounded bg-rpg-light text-black hover:bg-rpg-accent hover:text-rpg-dark transition font-bold border border-rpg-light/20"
             onClick={handleFavoritesClick}
           >
             ★ Favoritos
@@ -463,8 +476,8 @@ function App() {
         isPlaying={isPlaying}
         onPlay={handlePlay}
         onPause={handlePause}
-        isHost={isHost}
-        setIsHost={setIsHost}
+        connectionMode={connectionMode}
+        setConnectionMode={setConnectionMode}
         users={users}
         userName={userName}
         setUserName={setUserName}
@@ -497,7 +510,7 @@ function App() {
         onTimeUpdate={handleTimeUpdate}
         onPlay={handlePlay}
         onPause={handlePause}
-        isHost={isHost}
+        isHost={isHost || isSpectator} // Permitir control si es host O espectador
       />
 
     </div>

@@ -7,8 +7,8 @@ interface RoomProps {
   isPlaying: boolean
   onPlay: () => void
   onPause: () => void
-  isHost: boolean
-  setIsHost: (isHost: boolean) => void
+  connectionMode: "spectator" | "listener" | "host"
+  setConnectionMode: (mode: "spectator" | "listener" | "host") => void
   users: RoomUser[]
   userName: string
   setUserName: (name: string) => void
@@ -20,25 +20,25 @@ const Room: React.FC<RoomProps> = ({
   isPlaying, 
   onPlay, 
   onPause, 
-  isHost, 
-  setIsHost,
+  connectionMode,
+  setConnectionMode,
   users,
   userName,
   setUserName
 }) => {
   const [input, setInput] = useState(roomId)
-  // El rol local se deriva de isHost
-  const role = isHost ? "host" : "listener"
+  const isHost = connectionMode === "host"
+  const isListener = connectionMode === "listener"
+  const isSpectator = connectionMode === "spectator"
 
   // Detectar si ya hay un host en la sala (excluyéndome a mí mismo si soy host)
-  // Nota: users puede contener duplicados si la presencia no se limpia bien, filtramos por ID único si es posible, o confiamos en el role
   const activeHost = users.find(u => u.role === "host")
   
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault()
     setRoomId(input)
-    // Al cambiar de sala, siempre entramos como oyentes por seguridad
-    setIsHost(false)
+    // Al cambiar de sala, volvemos a espectador por defecto
+    setConnectionMode("spectator")
   }
 
   const handleClaimHost = () => {
@@ -47,10 +47,8 @@ const Room: React.FC<RoomProps> = ({
       return
     }
     const password = prompt("Introduce la clave de Dungeon Master:")
-    // Aquí podrías validar contra una clave real o variable de entorno
-    // Por ahora usamos una clave simple "admin" o permitimos cualquiera si es el primero
     if (password === "admin") {
-      setIsHost(true)
+      setConnectionMode("host")
     } else {
       alert("Clave incorrecta")
     }
@@ -88,8 +86,34 @@ const Room: React.FC<RoomProps> = ({
         Copiar Link de Invitación
       </button>
       
-      <div className="flex items-center gap-2">
-        <div className="text-rpg-light">Rol: <span className="font-bold text-rpg-primary">{isHost ? "Dungeon Master" : "Oyente"}</span></div>
+      <div className="flex items-center gap-2 flex-wrap justify-center">
+        <div className="text-rpg-light mr-2">Modo: 
+          <span className="font-bold text-rpg-primary ml-1">
+            {isHost ? "Dungeon Master" : isListener ? "Sincronizado" : "Espectador (Local)"}
+          </span>
+        </div>
+
+        {/* Botones de cambio de modo */}
+        {isSpectator && (
+          <button 
+            onClick={() => setConnectionMode("listener")}
+            className="text-xs bg-rpg-secondary text-white px-2 py-1 rounded hover:bg-rpg-primary hover:text-rpg-dark transition font-bold border border-rpg-light/20"
+            title="Sincronizarse con lo que escucha el DM"
+          >
+            Unirse a la Sesión (Sincronizar)
+          </button>
+        )}
+
+        {isListener && (
+          <button 
+            onClick={() => setConnectionMode("spectator")}
+            className="text-xs bg-rpg-dark text-rpg-light px-2 py-1 rounded hover:bg-rpg-secondary transition border border-rpg-light/20"
+            title="Escuchar música por mi cuenta"
+          >
+            Desvincularse (Modo Local)
+          </button>
+        )}
+
         {!isHost && !activeHost && (
           <button 
             onClick={handleClaimHost}
@@ -98,12 +122,14 @@ const Room: React.FC<RoomProps> = ({
             Reclamar DM
           </button>
         )}
+        
         {!isHost && activeHost && (
-          <span className="text-xs text-rpg-light/70 italic">(DM: {activeHost.name || "Anónimo"})</span>
+          <span className="text-xs text-rpg-light/70 italic ml-2">(DM: {activeHost.name || "Anónimo"})</span>
         )}
+        
         {isHost && (
           <button 
-            onClick={() => setIsHost(false)}
+            onClick={() => setConnectionMode("spectator")}
             className="text-xs text-rpg-light/60 hover:text-red-400 hover:underline ml-2 transition-colors"
           >
             Dejar puesto
@@ -117,8 +143,11 @@ const Room: React.FC<RoomProps> = ({
           {users.map(u => (
             <li key={u.id} className="flex items-center gap-2 bg-rpg-secondary/20 p-1 rounded border border-rpg-light/5">
               <span className="font-mono text-rpg-light/40 text-xs">{u.id.slice(-4)}</span>
-              <span className={`font-bold ${u.role === "host" ? "text-rpg-primary" : "text-rpg-light/80"}`}>
-                {u.role === "host" ? "DM" : "Oyente"}
+              <span className={`font-bold ${
+                u.role === "host" ? "text-rpg-primary" : 
+                u.role === "listener" ? "text-rpg-light/80" : "text-rpg-light/50"
+              }`}>
+                {u.role === "host" ? "DM" : u.role === "listener" ? "Oyente" : "Espectador"}
               </span>
               {u.name && (
                 <span className="text-white font-semibold ml-2">{u.name}</span>
@@ -129,7 +158,12 @@ const Room: React.FC<RoomProps> = ({
       </div>
       {isHost && (
         <div className="text-xs text-rpg-light/60 mt-2 italic">
-          Usa los controles del reproductor inferior para controlar la música.
+          Usa los controles del reproductor inferior para controlar la música de la sala.
+        </div>
+      )}
+      {isSpectator && (
+        <div className="text-xs text-rpg-light/60 mt-2 italic">
+          Estás en modo local. No escuchas lo que pone el DM hasta que te unas a la sesión.
         </div>
       )}
     </div>

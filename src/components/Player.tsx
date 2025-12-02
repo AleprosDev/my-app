@@ -286,7 +286,7 @@ const Player: React.FC<PlayerProps> = ({
           `}
           title={isPlaying ? "Pausar" : "Reproducir"}
         >
-          {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+          {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-0" />}
         </button>
       )}
 
