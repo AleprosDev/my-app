@@ -72,7 +72,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
       {/* Botón flotante para abrir/cerrar Soundboard */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-4 bottom-40 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
+        className={`fixed right-4 bottom-52 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
           isOpen 
             ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"

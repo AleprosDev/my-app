@@ -50,7 +50,7 @@ const FeedbackForm: React.FC = () => {
       {/* Botón flotante */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-4 bottom-24 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
+        className={`fixed right-4 bottom-36 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
           isOpen 
             ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
@@ -62,7 +62,7 @@ const FeedbackForm: React.FC = () => {
 
       {/* Panel lateral */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-80 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-6 pt-24 overflow-y-auto backdrop-blur-sm ${
+        className={`fixed right-0 top-0 bottom-0 w-80 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-6 pr-20 pt-24 overflow-y-auto backdrop-blur-sm ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
