@@ -62,7 +62,7 @@ const FeedbackForm: React.FC = () => {
 
       {/* Panel lateral */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-80 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-6 pr-20 pt-24 overflow-y-auto backdrop-blur-sm ${
+        className={`fixed right-0 top-0 bottom-0 w-80 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-6 pr-20 pt-16 pb-40 overflow-y-auto backdrop-blur-sm ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
