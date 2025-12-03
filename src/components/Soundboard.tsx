@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react"
-import { Volume2, Zap, Shield, Skull, DoorOpen, CloudRain, FingerprintPattern, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
+import { Volume2, Zap, Shield, Skull, DoorOpen, CloudRain, Fingerprint, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
 import { AmbienceTrack } from "../lib/useAmbience"
 
 export type SfxItem = {
@@ -20,7 +20,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   wind: Wind,
   fire: Flame,
   default: Music,
-  fingerPrint: FingerprintPattern
+  fingerPrint: Fingerprint
 }
 
 type SoundboardProps = {
