@@ -150,6 +150,7 @@ function App() {
           id: String(item.id),
           label: item.label,
           icon: item.icon,
+          category: item.category,
           url: item.url.startsWith("http") 
             ? item.url 
             : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/music/${item.url.replace(/^\//, "")}`

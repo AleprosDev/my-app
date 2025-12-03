@@ -7,6 +7,7 @@ export type SfxItem = {
   label: string
   icon: string
   url: string
+  category?: string
 }
 
 // Mapa de iconos disponibles
@@ -34,6 +35,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"sfx" | "ambience">("sfx")
   const [sfxVolume, setSfxVolume] = useState(50)
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
   
   // Estado local eliminado, usamos props
 
@@ -121,25 +123,44 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
               />
             </div>
 
+            {/* Filtros de Categoría */}
+            <div className="flex gap-1 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+              {["all", "medieval", "scifi", "modern", "horror"].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold capitalize transition-all whitespace-nowrap ${
+                    selectedCategory === cat
+                      ? "bg-rpg-primary text-rpg-dark shadow-[0_0_10px_rgba(212,255,95,0.4)]"
+                      : "bg-rpg-secondary/40 text-rpg-light/60 hover:bg-rpg-secondary hover:text-rpg-light"
+                  }`}
+                >
+                  {cat === "all" ? "Todos" : cat}
+                </button>
+              ))}
+            </div>
+
             {/* Grid de botones (Solo Host) */}
             {isHost ? (
               <div className="grid grid-cols-2 gap-3">
-                {sounds.map((sfx) => {
+                {sounds
+                  .filter(s => selectedCategory === "all" || (s.category && s.category.toLowerCase() === selectedCategory))
+                  .map((sfx) => {
                   const Icon = ICON_MAP[sfx.icon] || ICON_MAP.default
                   return (
                     <button
                       key={sfx.id}
                       onClick={() => onPlaySfx(sfx.id)}
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group animate-in fade-in zoom-in duration-300"
                     >
                       <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />
                       <span className="text-xs font-medium text-rpg-light group-hover:text-rpg-dark text-center">{sfx.label}</span>
                     </button>
                   )
                 })}
-                {sounds.length === 0 && (
+                {sounds.filter(s => selectedCategory === "all" || (s.category && s.category.toLowerCase() === selectedCategory)).length === 0 && (
                   <div className="col-span-2 text-center text-xs text-rpg-light/50 py-4">
-                    No hay efectos cargados.
+                    No hay efectos en esta categoría.
                   </div>
                 )}
               </div>
