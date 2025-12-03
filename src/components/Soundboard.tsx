@@ -124,12 +124,12 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
             </div>
 
             {/* Filtros de Categoría */}
-            <div className="flex gap-1 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex flex-wrap gap-2 mb-4 justify-center">
               {["all", "medieval", "scifi", "modern", "horror"].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold capitalize transition-all whitespace-nowrap ${
+                  className={`px-3 py-1 rounded-full text-xs font-bold capitalize transition-all ${
                     selectedCategory === cat
                       ? "bg-rpg-primary text-rpg-dark shadow-[0_0_10px_rgba(212,255,95,0.4)]"
                       : "bg-rpg-secondary/40 text-rpg-light/60 hover:bg-rpg-secondary hover:text-rpg-light"
