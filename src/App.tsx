@@ -122,10 +122,13 @@ function App() {
           }
 
           // Construimos la URL pública
+          // IMPORTANTE: encodeURIComponent para manejar espacios y caracteres especiales en nombres de archivo
+          const encodedFilename = filename.split('/').map(part => encodeURIComponent(part)).join('/');
+          
           return {
             ...song,
             audio_url: filename
-              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/music/${filename.replace(/^\//, "")}`
+              ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/music/${encodedFilename.replace(/^\//, "")}`
               : "",
           }
         })
