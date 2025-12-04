@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react"
-import { Play, Pause, Volume2, VolumeX } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, ChevronDown } from "lucide-react"
 
 type PlayerProps = {
   song: {
@@ -38,10 +38,40 @@ const Player: React.FC<PlayerProps> = ({
   const [audioError, setAudioError] = useState<string | null>(null)
   const [localProgress, setLocalProgress] = useState(0)
   const [isSeeking, setIsSeeking] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const [volume, setVolume] = useState(() => {
     const stored = localStorage.getItem("music_volume")
     return stored ? Number(stored) : 80
   }) // Volumen local, 80% por defecto
+
+  // Touch handling for swipe
+  const touchStartY = useRef<number | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return
+    
+    const currentY = e.touches[0].clientY
+    const diff = currentY - touchStartY.current
+
+    // Si desliza hacia abajo y no está colapsado -> colapsar
+    if (diff > 50 && !isCollapsed) {
+      setIsCollapsed(true)
+      touchStartY.current = null
+    }
+    // Si desliza hacia arriba y está colapsado -> expandir
+    else if (diff < -50 && isCollapsed) {
+      setIsCollapsed(false)
+      touchStartY.current = null
+    }
+  }
+
+  const handleTouchEnd = () => {
+    touchStartY.current = null
+  }
 
   // Persistir volumen
   useEffect(() => {
@@ -297,7 +327,24 @@ const Player: React.FC<PlayerProps> = ({
   const progressPercent = (localProgress / durationSecs) * 100;
 
   return (
-    <div className="fixed left-0 right-0 bottom-0 bg-rpg-dark/95 backdrop-blur-md border-t border-rpg-accent/30 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] px-4 py-3 flex items-center z-50 gap-4">
+    <div 
+      className={`fixed left-0 right-0 bottom-0 bg-rpg-dark/95 backdrop-blur-md border-t border-rpg-accent/30 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] px-4 py-3 flex items-center z-50 gap-4 transition-transform duration-500 ease-in-out ${isCollapsed ? "translate-y-[calc(100%-30px)]" : "translate-y-0"}`}
+    >
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="absolute -top-6 left-4 md:left-1/2 md:-translate-x-1/2 h-6 w-12 bg-rpg-dark/95 border-t border-x border-rpg-accent/30 rounded-t-lg flex items-center justify-center cursor-pointer hover:bg-rpg-secondary/20 transition-colors"
+        title={isCollapsed ? "Expandir reproductor" : "Colapsar reproductor"}
+      >
+        <ChevronDown 
+          size={20} 
+          className={`text-rpg-accent transition-transform duration-500 ${isCollapsed ? "rotate-180" : ""}`} 
+        />
+      </button>
+
       {/* Visualizer Background (Simulated) */}
       {isPlaying && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
