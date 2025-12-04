@@ -505,7 +505,7 @@ function App() {
         onToggle={() => setIsSoundboardOpen(!isSoundboardOpen)}
       />
 
-      <FeedbackForm soundboardOpen={isSoundboardOpen} />
+      <FeedbackForm />
 
       <Player
         song={selectedSong ? {

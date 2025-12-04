@@ -88,7 +88,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
         onClick={onToggle}
         className={`fixed right-4 bottom-52 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
           isOpen 
-            ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90 translate-y-24" 
+            ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
         }`}
         title={isHost ? "Abrir Panel DM" : "Abrir Ajustes de Sonido"}
@@ -98,7 +98,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
 
       {/* Panel lateral del Soundboard */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-72 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 overflow-y-auto backdrop-blur-sm ${
+        className={`fixed right-0 top-0 bottom-0 w-96 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 pr-20 overflow-y-auto backdrop-blur-sm ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
