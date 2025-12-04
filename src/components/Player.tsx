@@ -130,22 +130,29 @@ const Player: React.FC<PlayerProps> = ({
   }, [volume])
 
   // --- NUEVA LÓGICA DE VOLUMEN Y FADES ROBUSTA ---
-  // El volumen del audio debe ser SIEMPRE igual al del slider después de cualquier fade, cambio de canción o play/pause.
-  // El fadeIn y fadeOut usan el valor del slider como destino/final.
+  // Estado interno para manejar la canción actual y permitir transiciones
+  const [internalSong, setInternalSong] = useState(song)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   // Fade in
   const fadeIn = (targetVol: number, done?: () => void) => {
     if (!audioRef.current) return
     let t = 0
-    const duration = 1000 // ms
+    const duration = 1500 // 1.5s para transición suave
     audioRef.current.volume = 0
+    
+    // Limpiar cualquier intervalo previo si existiera (aunque aquí usamos recursión con timeout)
+    // Mejor usar requestAnimationFrame o timeouts controlados
+    
     function step() {
       if (!audioRef.current) return
-      t += 40
+      t += 50
+      // Curva exponencial suave
       const v = targetVol * (1 - Math.exp(-3 * t / duration))
-      audioRef.current.volume = Math.min(targetVol, v)
+      audioRef.current.volume = Math.min(targetVol, Math.max(0, v))
+      
       if (t < duration && v < targetVol - 0.01) {
-        setTimeout(step, 40)
+        setTimeout(step, 50)
       } else {
         audioRef.current.volume = targetVol
         if (done) done()
@@ -156,17 +163,28 @@ const Player: React.FC<PlayerProps> = ({
 
   // Fade out
   const fadeOut = (done?: () => void) => {
-    if (!audioRef.current) return
+    if (!audioRef.current) {
+      if (done) done()
+      return
+    }
+    
     let t = 0
-    const duration = 1000 // ms
+    const duration = 1000 // 1s para fade out
     const startVol = audioRef.current.volume
+    
+    if (startVol <= 0.01) {
+      if (done) done()
+      return
+    }
+
     function step() {
       if (!audioRef.current) return
-      t += 40
+      t += 50
       const v = startVol * Math.exp(-3 * t / duration)
       audioRef.current.volume = Math.max(0, v)
+      
       if (t < duration && v > 0.01) {
-        setTimeout(step, 40)
+        setTimeout(step, 50)
       } else {
         audioRef.current.volume = 0
         if (done) done()
@@ -175,65 +193,94 @@ const Player: React.FC<PlayerProps> = ({
     step()
   }
 
+  // Efecto para manejar el cambio de canción con transición (Crossfade simulado)
+  useEffect(() => {
+    // Si la URL es la misma, no hacemos nada (evita loops)
+    if (song.audio_url === internalSong.audio_url) return
+
+    const audio = audioRef.current
+    
+    // Si no hay audio o está pausado, cambio directo sin fade out
+    if (!audio || audio.paused || !isPlaying) {
+      setInternalSong(song)
+      return
+    }
+
+    // Si está reproduciendo, hacemos fade out primero
+    setIsTransitioning(true)
+    fadeOut(() => {
+      setInternalSong(song)
+      setIsTransitioning(false)
+      // El efecto de abajo (canPlay) se encargará del fade in
+    })
+  }, [song, isPlaying, internalSong.audio_url]) // Dependemos de song (prop) y estado de reproducción
+
   const [needsInteraction, setNeedsInteraction] = useState(false)
 
-  // Controlar play/pause con fades
+  // Controlar play/pause y Fade In al cargar nueva canción
   useEffect(() => {
-    if (!audioRef.current || !canPlay) return
-    if (isPlaying) {
+    if (!audioRef.current) return
+    
+    // Si estamos en medio de una transición de canción, no interferir
+    if (isTransitioning) return
+
+    if (isPlaying && canPlay) {
       const playPromise = audioRef.current.play()
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setNeedsInteraction(false)
+            // Hacemos fade in hasta el volumen deseado
             fadeIn(volume / 100)
           })
           .catch((error) => {
             console.error("Error al reproducir:", error)
-            // Si el error es NotAllowedError, necesitamos interacción del usuario
             if (error.name === "NotAllowedError") {
               setNeedsInteraction(true)
             }
           })
       }
-    } else {
-      fadeOut(() => {
-        if (audioRef.current) {
-          audioRef.current.pause()
-          // Restaurar el volumen al slider tras pausar
-          audioRef.current.volume = volume / 100
-        }
-      })
+    } else if (!isPlaying && !isTransitioning) {
+      // Solo pausar si NO estamos transicionando (la transición maneja su propio fade out)
+      // Y si realmente estaba sonando
+      if (!audioRef.current.paused) {
+        fadeOut(() => {
+          if (audioRef.current) {
+            audioRef.current.pause()
+            // Restaurar volumen para que al volver a dar play (sin cambio de canción) funcione la lógica normal
+            // Aunque nuestra lógica de play siempre hace fade in, así que está bien.
+          }
+        })
+      }
     }
-    // eslint-disable-next-line
-  }, [isPlaying, canPlay])
+  }, [isPlaying, canPlay, internalSong, isTransitioning, volume]) // Agregamos internalSong para disparar al terminar el cambio
 
-  // Al cambiar de canción, setear el volumen al slider tras cargar
+  // Cargar audio cuando cambia internalSong
   useEffect(() => {
-    if (!audioRef.current) return
-    const audioEl = audioRef.current
-    const handler = () => {
-      audioEl.volume = volume / 100
+    setCanPlay(false)
+    setAudioError(null)
+    setLocalProgress(0)
+    if (audioRef.current) {
+      audioRef.current.load()
     }
-    audioEl.addEventListener('canplaythrough', handler)
-    return () => {
-      audioEl.removeEventListener('canplaythrough', handler)
-    }
-  }, [song.audio_url, volume])
+  }, [internalSong.audio_url])
 
-  // Cuando cambia el volumen desde el slider, actualizar el volumen del audio inmediatamente (si no está en fade)
+  // Actualizar volumen del audio cuando cambia el slider (solo si no estamos en transición)
   useEffect(() => {
-    if (audioRef.current && isPlaying) {
+    if (audioRef.current && isPlaying && !isTransitioning) {
       audioRef.current.volume = volume / 100
     }
-  }, [volume, isPlaying])
+  }, [volume, isPlaying, isTransitioning])
 
   // Solo renderizar si song tiene todos los campos requeridos
-  if (!song || !song.title || !song.artist || !song.duration || !song.cover_url || !song.audio_url) {
+  // Usamos internalSong para mostrar la info de lo que realmente suena (o va a sonar)
+  const displaySong = internalSong
+
+  if (!displaySong || !displaySong.title || !displaySong.artist || !displaySong.duration || !displaySong.cover_url || !displaySong.audio_url) {
     return <div className="text-center text-rpg-light/50 py-8">Selecciona una canción para comenzar</div>;
   }
 
-  const durationSecs = getDurationSeconds(song.duration) || 1;
+  const durationSecs = getDurationSeconds(displaySong.duration) || 1;
   const progressPercent = (localProgress / durationSecs) * 100;
 
   return (
@@ -260,8 +307,8 @@ const Player: React.FC<PlayerProps> = ({
       {/* Album Art */}
       <div className="relative group flex-shrink-0">
         <img
-          src={song.cover_url}
-          alt={song.title}
+          src={displaySong.cover_url}
+          alt={displaySong.title}
           className="h-16 w-16 rounded-lg object-cover border border-rpg-light/20 shadow-lg"
         />
         {/* Mini visualizer overlay on album art */}
@@ -299,11 +346,11 @@ const Player: React.FC<PlayerProps> = ({
 
         <div className="flex justify-between items-baseline mb-1">
           <div className="truncate pr-2">
-            <span className="font-bold text-white text-lg">{song.title}</span>
-            <span className="text-sm text-rpg-light/70 ml-2">{song.artist}</span>
+            <span className="font-bold text-white text-lg">{displaySong.title}</span>
+            <span className="text-sm text-rpg-light/70 ml-2">{displaySong.artist}</span>
           </div>
           <div className="text-xs text-rpg-light/60 font-mono">
-            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")} / {song.duration}
+            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")} / {displaySong.duration}
           </div>
         </div>
         
@@ -328,7 +375,7 @@ const Player: React.FC<PlayerProps> = ({
         
         <audio
           ref={audioRef}
-          src={song.audio_url}
+          src={displaySong.audio_url}
           onTimeUpdate={handleAudioTimeUpdate}
           preload="auto"
           onCanPlayThrough={handleCanPlayThrough}
