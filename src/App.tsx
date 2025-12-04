@@ -122,8 +122,10 @@ function App() {
           }
 
           // Construimos la URL pública
-          // IMPORTANTE: encodeURIComponent para manejar espacios y caracteres especiales en nombres de archivo
-          const encodedFilename = filename.split('/').map(part => encodeURIComponent(part)).join('/');
+          // IMPORTANTE: Primero decodificamos por si ya venía codificado (evitar doble encoding %2520)
+          // Luego encodeURIComponent para manejar espacios y caracteres especiales
+          const decodedFilename = decodeURIComponent(filename);
+          const encodedFilename = decodedFilename.split('/').map(part => encodeURIComponent(part)).join('/');
           
           return {
             ...song,
