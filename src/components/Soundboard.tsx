@@ -98,7 +98,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
 
       {/* Panel lateral del Soundboard */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-[500px] bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 pr-24 overflow-y-auto backdrop-blur-sm ${
+        className={`fixed right-0 top-[68px] bottom-0 w-[500px] bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-4 pr-24 overflow-y-auto backdrop-blur-sm ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

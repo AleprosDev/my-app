@@ -457,7 +457,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-rpg-dark pb-24">
-      <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} isSoundboardOpen={isSoundboardOpen} />
+      <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} />
       <main className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6 text-rpg-light">Mi Biblioteca Musical</h1>
         {/* Botones de acción */}
