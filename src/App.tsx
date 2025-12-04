@@ -24,6 +24,7 @@ function App() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [isSoundboardOpen, setIsSoundboardOpen] = useState(false)
   
   // Estado de ambiente (Lifted state)
   const [ambienceState, setAmbienceState] = useState<Record<string, { isPlaying: boolean, volume: number, loop: boolean }>>({})
@@ -500,9 +501,11 @@ function App() {
         ambienceTracks={ambienceList}
         onAmbienceChange={handleAmbienceChange}
         ambienceState={ambienceState}
+        isOpen={isSoundboardOpen}
+        onToggle={() => setIsSoundboardOpen(!isSoundboardOpen)}
       />
 
-      <FeedbackForm />
+      <FeedbackForm soundboardOpen={isSoundboardOpen} />
 
       <Player
         song={selectedSong ? {

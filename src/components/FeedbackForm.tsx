@@ -2,7 +2,11 @@ import React, { useState } from "react"
 import { HelpCircle, Send, X, Loader2 } from "lucide-react"
 import emailjs from '@emailjs/browser'
 
-const FeedbackForm: React.FC = () => {
+interface FeedbackFormProps {
+  soundboardOpen?: boolean
+}
+
+const FeedbackForm: React.FC<FeedbackFormProps> = ({ soundboardOpen = false }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [status, setStatus] = useState<{type: 'success' | 'error' | null, message: string}>({ type: null, message: '' })
@@ -54,7 +58,7 @@ const FeedbackForm: React.FC = () => {
           isOpen 
             ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
-        }`}
+        } ${soundboardOpen ? "translate-y-24" : ""}`}
         title="Enviar Feedback o Reportar Problema"
       >
         {isOpen ? <X size={24} /> : <HelpCircle size={24} />}

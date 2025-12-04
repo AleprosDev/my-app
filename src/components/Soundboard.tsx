@@ -40,10 +40,11 @@ type SoundboardProps = {
   ambienceTracks: AmbienceTrack[]
   onAmbienceChange: (id: string, isPlaying: boolean, volume: number, loop: boolean) => void
   ambienceState: Record<string, { isPlaying: boolean, volume: number, loop: boolean }>
+  isOpen: boolean
+  onToggle: () => void
 }
 
-const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambienceTracks, onAmbienceChange, ambienceState }) => {
-  const [isOpen, setIsOpen] = useState(false)
+const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambienceTracks, onAmbienceChange, ambienceState, isOpen, onToggle }) => {
   const [activeTab, setActiveTab] = useState<"sfx" | "ambience">("sfx")
   const [sfxVolume, setSfxVolume] = useState(50)
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -84,10 +85,10 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
     <>
       {/* Botón flotante para abrir/cerrar Soundboard */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className={`fixed right-4 bottom-52 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
           isOpen 
-            ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
+            ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90 translate-y-24" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
         }`}
         title={isHost ? "Abrir Panel DM" : "Abrir Ajustes de Sonido"}
