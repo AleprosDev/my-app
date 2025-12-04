@@ -5,9 +5,10 @@ import type React from "react"
 type NavbarProps = {
   activeTab: string
   setActiveTab: (tab: string) => void
+  isSoundboardOpen?: boolean
 }
 
-const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
+const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, isSoundboardOpen = false }) => {
   const tabs = [
     { id: "medieval", name: "Medieval" },
     { id: "scifi", name: "Sci-Fi" },
@@ -20,11 +21,11 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <h1 className="text-xl font-bold text-rpg-light">Bard's Tavern</h1>
+            <h1 className="text-xl font-bold text-rpg-light">El laud infinito, musica & ambientación</h1>
           </div>
 
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className={`ml-10 flex items-baseline space-x-4 transition-transform duration-300 ${isSoundboardOpen ? "-translate-x-32" : ""}`}>
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
