@@ -19,8 +19,9 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
     <nav className="bg-rpg-dark text-white shadow-md border-b-4 border-rpg-accent relative z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex-shrink-0">
-            <h1 className="text-xl font-bold text-rpg-light">El laud infinito, musica & ambientación</h1>
+          <div className="flex-shrink-0 flex items-center gap-3">
+            <img src="/icon_250.png" alt="Logo" className="h-10 w-auto object-contain" />
+            <h1 className="text-xl font-bold text-rpg-light">El laud infinito</h1>
           </div>
 
           <div className="hidden md:block">
