@@ -264,7 +264,7 @@ const Player: React.FC<PlayerProps> = ({
         })
       }
     }
-  }, [isPlaying, canPlay, internalSong, isTransitioning, volume]) // Agregamos internalSong para disparar al terminar el cambio
+  }, [isPlaying, canPlay, internalSong, isTransitioning]) // Eliminamos 'volume' de dependencias para evitar reinicio de fade al cambiar volumen
 
   // Cargar audio cuando cambia internalSong
   useEffect(() => {
