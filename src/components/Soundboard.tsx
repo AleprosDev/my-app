@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react"
-import { Volume2, Zap, Shield, ShieldAlert, Coins, Beer, Siren, ChevronsLeftRightEllipsis TriangleAlert, Swords, Skull, DoorOpen, CloudRain, Fingerprint, ScanEye, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
+import { Volume2, Zap, Shield, ShieldAlert, Coins, Beer, Siren, ChevronsLeftRightEllipsis, TriangleAlert, Swords, Skull, DoorOpen, CloudRain, Fingerprint, ScanEye, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
 import { AmbienceTrack } from "../lib/useAmbience"
 
 export type SfxItem = {
@@ -28,7 +28,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   triangleAlert: TriangleAlert,
   swords: Swords,
   siren: Siren,
-  chevronsLeftRightEllipsis: ChevronsLeftRightEllipsis,
+  chevronsLeftRightEllipsis: ChevronsLeftRightEllipsis
 }
 
 type SoundboardProps = {
