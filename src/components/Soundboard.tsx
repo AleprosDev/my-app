@@ -86,7 +86,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
       {/* Botón flotante para abrir/cerrar Soundboard */}
       <button
         onClick={onToggle}
-        className={`fixed right-4 bottom-52 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 ${
+        className={`fixed right-4 bottom-52 z-40 p-3 rounded-full shadow-lg transition-all duration-300 border-2 cursor-pointer ${
           isOpen 
             ? "bg-rpg-light text-rpg-dark border-rpg-primary rotate-90" 
             : "bg-rpg-primary text-rpg-dark border-rpg-light hover:scale-110"
@@ -98,20 +98,20 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
 
       {/* Panel lateral del Soundboard */}
       <div 
-        className={`fixed right-0 top-0 bottom-0 w-96 bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 pr-20 overflow-y-auto backdrop-blur-sm ${
+        className={`fixed right-0 top-0 bottom-0 w-[500px] bg-rpg-dark/95 border-l-2 border-rpg-accent shadow-2xl transform transition-transform duration-300 z-30 p-4 pt-20 pr-24 overflow-y-auto backdrop-blur-sm ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex gap-2 mb-6 border-b border-rpg-light/20 pb-2">
           <button 
             onClick={() => setActiveTab("sfx")}
-            className={`flex-1 pb-2 text-sm font-bold transition-colors ${activeTab === "sfx" ? "text-rpg-primary border-b-2 border-rpg-primary" : "text-rpg-light/50 hover:text-rpg-light"}`}
+            className={`flex-1 pb-2 text-sm font-bold transition-colors cursor-pointer ${activeTab === "sfx" ? "text-rpg-primary border-b-2 border-rpg-primary" : "text-rpg-light/50 hover:text-rpg-light"}`}
           >
             Efectos (SFX)
           </button>
           <button 
             onClick={() => setActiveTab("ambience")}
-            className={`flex-1 pb-2 text-sm font-bold transition-colors ${activeTab === "ambience" ? "text-rpg-primary border-b-2 border-rpg-primary" : "text-rpg-light/50 hover:text-rpg-light"}`}
+            className={`flex-1 pb-2 text-sm font-bold transition-colors cursor-pointer ${activeTab === "ambience" ? "text-rpg-primary border-b-2 border-rpg-primary" : "text-rpg-light/50 hover:text-rpg-light"}`}
           >
             Ambiente
           </button>
@@ -136,12 +136,12 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
             </div>
 
             {/* Filtros de Categoría */}
-            <div className="flex flex-wrap gap-2 mb-4 justify-center">
+            <div className="flex flex-wrap gap-2 mb-4 justify-start">
               {["all", "medieval", "scifi", "modern", "horror"].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold capitalize transition-all ${
+                  className={`px-3 py-1 rounded-full text-xs font-bold capitalize transition-all cursor-pointer ${
                     selectedCategory === cat
                       ? "bg-rpg-primary text-rpg-dark shadow-[0_0_10px_rgba(212,255,95,0.4)]"
                       : "bg-rpg-secondary/40 text-rpg-light/60 hover:bg-rpg-secondary hover:text-rpg-light"
@@ -163,7 +163,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
                     <button
                       key={sfx.id}
                       onClick={() => onPlaySfx(sfx.id)}
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group animate-in fade-in zoom-in duration-300"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group animate-in fade-in zoom-in duration-300 cursor-pointer"
                     >
                       <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />
                       <span className="text-xs font-medium text-rpg-light group-hover:text-rpg-dark text-center">{sfx.label}</span>
@@ -200,14 +200,14 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleAmbienceLoop(track)}
-                          className={`p-1 rounded-full transition-colors ${state.loop ? "text-rpg-primary" : "text-rpg-light/30 hover:text-rpg-light/70"}`}
+                          className={`p-1 rounded-full transition-colors cursor-pointer ${state.loop ? "text-rpg-primary" : "text-rpg-light/30 hover:text-rpg-light/70"}`}
                           title={state.loop ? "Desactivar bucle" : "Activar bucle"}
                         >
                           <Repeat size={14} />
                         </button>
                         <button
                           onClick={() => handleAmbienceToggle(track)}
-                          className={`p-1 rounded-full transition-colors ${state.isPlaying ? "bg-rpg-primary text-rpg-dark" : "bg-rpg-dark text-rpg-light border border-rpg-light/20"}`}
+                          className={`p-1 rounded-full transition-all duration-200 cursor-pointer ${state.isPlaying ? "bg-rpg-primary text-rpg-dark hover:bg-rpg-primary/80" : "bg-rpg-dark text-rpg-light border border-rpg-light/20 hover:bg-rpg-light hover:text-rpg-dark hover:border-rpg-light hover:scale-110"}`}
                         >
                           {state.isPlaying ? <Pause size={16} /> : <Play size={16} />}
                         </button>
