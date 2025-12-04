@@ -133,16 +133,24 @@ const Player: React.FC<PlayerProps> = ({
   // Estado interno para manejar la canción actual y permitir transiciones
   const [internalSong, setInternalSong] = useState(song)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  
+  // Ref para controlar los timeouts de los fades y poder cancelarlos
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const stopFades = () => {
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current)
+      fadeTimeoutRef.current = null
+    }
+  }
 
   // Fade in
   const fadeIn = (targetVol: number, done?: () => void) => {
+    stopFades()
     if (!audioRef.current) return
     let t = 0
     const duration = 1500 // 1.5s para transición suave
     audioRef.current.volume = 0
-    
-    // Limpiar cualquier intervalo previo si existiera (aunque aquí usamos recursión con timeout)
-    // Mejor usar requestAnimationFrame o timeouts controlados
     
     function step() {
       if (!audioRef.current) return
@@ -152,9 +160,10 @@ const Player: React.FC<PlayerProps> = ({
       audioRef.current.volume = Math.min(targetVol, Math.max(0, v))
       
       if (t < duration && v < targetVol - 0.01) {
-        setTimeout(step, 50)
+        fadeTimeoutRef.current = setTimeout(step, 50)
       } else {
         audioRef.current.volume = targetVol
+        fadeTimeoutRef.current = null
         if (done) done()
       }
     }
@@ -163,6 +172,7 @@ const Player: React.FC<PlayerProps> = ({
 
   // Fade out
   const fadeOut = (done?: () => void) => {
+    stopFades()
     if (!audioRef.current) {
       if (done) done()
       return
@@ -184,9 +194,10 @@ const Player: React.FC<PlayerProps> = ({
       audioRef.current.volume = Math.max(0, v)
       
       if (t < duration && v > 0.01) {
-        setTimeout(step, 50)
+        fadeTimeoutRef.current = setTimeout(step, 50)
       } else {
         audioRef.current.volume = 0
+        fadeTimeoutRef.current = null
         if (done) done()
       }
     }
@@ -268,6 +279,8 @@ const Player: React.FC<PlayerProps> = ({
   // Actualizar volumen del audio cuando cambia el slider (solo si no estamos en transición)
   useEffect(() => {
     if (audioRef.current && isPlaying && !isTransitioning) {
+      // Si el usuario mueve el slider manualmente, cancelamos cualquier fade en progreso
+      stopFades()
       audioRef.current.volume = volume / 100
     }
   }, [volume, isPlaying, isTransitioning])
