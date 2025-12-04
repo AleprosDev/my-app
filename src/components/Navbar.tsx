@@ -16,7 +16,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   ]
 
   return (
-    <nav className="bg-rpg-dark text-white shadow-md border-b-4 border-rpg-accent">
+    <nav className="bg-rpg-dark text-white shadow-md border-b-4 border-rpg-accent relative z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
