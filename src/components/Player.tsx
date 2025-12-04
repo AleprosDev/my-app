@@ -410,7 +410,7 @@ const Player: React.FC<PlayerProps> = ({
             <span className="text-sm text-rpg-light/70 ml-2">{displaySong.artist}</span>
           </div>
           <div className="text-xs text-rpg-light/60 font-mono">
-            {Math.floor(localProgress / 60)}:{(localProgress % 60).toString().padStart(2, "0")} / {displaySong.duration}
+            {Math.floor(localProgress / 60)}:{Math.floor(localProgress % 60).toString().padStart(2, "0")} / {displaySong.duration}
           </div>
         </div>
         
