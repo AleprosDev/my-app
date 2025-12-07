@@ -78,15 +78,6 @@ const Player: React.FC<PlayerProps> = ({
     localStorage.setItem("music_volume", String(volume))
   }, [volume])
 
-  useEffect(() => {
-    setCanPlay(false)
-    setAudioError(null)
-    setLocalProgress(0)
-    if (audioRef.current) {
-      audioRef.current.load()
-    }
-  }, [song.audio_url])
-
   // Solo hacer seek cuando cambia la canción o el host hace seek
   useEffect(() => {
     if (!audioRef.current) return
@@ -438,6 +429,7 @@ const Player: React.FC<PlayerProps> = ({
           src={displaySong.audio_url}
           onTimeUpdate={handleAudioTimeUpdate}
           preload="auto"
+          crossOrigin="anonymous"
           onCanPlayThrough={handleCanPlayThrough}
           onLoadStart={handleLoadStart}
           onError={handleAudioError}
