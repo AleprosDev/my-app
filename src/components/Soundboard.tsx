@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react"
-import { Volume2, Zap, Shield, ShieldAlert, Coins, Plane, Beer, Angry, Fan, Siren, ChevronsLeftRightEllipsis, TriangleAlert, Swords, Skull, DoorOpen, CloudRain, Fingerprint, ScanEye, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
+import { Volume2, Zap, Shield, ShieldAlert, Coins, Plane, Beer, Angry, HeartPulse, Fan, Wine, Siren, ChevronsLeftRightEllipsis, TriangleAlert, Swords, Skull, DoorOpen, CloudRain, Fingerprint, ScanEye, Wind, Flame, Music, Sliders, Play, Pause, Repeat } from "lucide-react"
 import { AmbienceTrack } from "../lib/useAmbience"
 
 export type SfxItem = {
@@ -32,6 +32,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   plane: Plane,
   drone: Fan,
   angry: Angry,
+  wine: Wine,
+  heartPulse: HeartPulse,
 }
 
 type SoundboardProps = {
