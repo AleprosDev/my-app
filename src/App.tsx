@@ -14,6 +14,7 @@ import { useAmbience, AmbienceTrack } from "./lib/useAmbience"
 import "../app/globals.css"
 import FeedbackForm from "./components/FeedbackForm"
 import { useToast } from "./components/ui/Toast"
+import QueueList from "./components/QueueList"
 
 const DEFAULT_ROOM = "sala1"
 
@@ -31,6 +32,7 @@ function App() {
   
   // Queue State
   const [queue, setQueue] = useState<Song[]>([])
+  const [isQueueOpen, setIsQueueOpen] = useState(false)
 
   // Playback State
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off')
@@ -234,6 +236,23 @@ function App() {
     setQueue(prev => [...prev, song])
     addToast(`Añadida a la cola: ${song.title}`, "success")
   }, [addToast])
+
+  const removeFromQueue = useCallback((index: number) => {
+    setQueue(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const clearQueue = useCallback(() => {
+    setQueue([])
+  }, [])
+
+  const playFromQueue = useCallback((song: Song, index: number) => {
+    // Remove this song and all previous ones from queue? Or just play it and remove it?
+    // Standard behavior: Play it, remove it from queue, and keep the rest of the queue.
+    // But if user clicks a song in the middle of queue, usually it skips to that point.
+    // Let's just play it and remove it for now.
+    handleSongClick(song)
+    setQueue(prev => prev.filter((_, i) => i !== index))
+  }, [handleSongClick])
 
   // Sincronización con Supabase
   const onSyncEvent = useCallback((event: SyncEvent) => {
@@ -691,6 +710,15 @@ function App() {
 
       <FeedbackForm />
 
+      <QueueList 
+        queue={queue}
+        isOpen={isQueueOpen}
+        onClose={() => setIsQueueOpen(false)}
+        onRemove={removeFromQueue}
+        onClear={clearQueue}
+        onPlay={playFromQueue}
+      />
+
       <Player
         song={selectedSong ? {
           ...selectedSong,
@@ -716,6 +744,7 @@ function App() {
         isShuffle={isShuffle}
         onToggleRepeat={() => setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off')}
         onToggleShuffle={() => setIsShuffle(prev => !prev)}
+        onToggleQueue={() => setIsQueueOpen(prev => !prev)}
         isHost={isHost || isSpectator} // Permitir control si es host O espectador
       />
 

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react"
-import { Play, Pause, Volume2, VolumeX, ChevronDown, SkipBack, SkipForward, Repeat, Repeat1, Shuffle } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, ChevronDown, SkipBack, SkipForward, Repeat, Repeat1, Shuffle, ListMusic } from "lucide-react"
 
 type PlayerProps = {
   song: {
@@ -22,6 +22,7 @@ type PlayerProps = {
   isShuffle?: boolean
   onToggleRepeat?: () => void
   onToggleShuffle?: () => void
+  onToggleQueue?: () => void
   isHost?: boolean
 }
 
@@ -45,6 +46,7 @@ const Player: React.FC<PlayerProps> = ({
   isShuffle = false,
   onToggleRepeat,
   onToggleShuffle,
+  onToggleQueue,
   isHost = false,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -470,24 +472,35 @@ const Player: React.FC<PlayerProps> = ({
         
         <div className="flex items-center mt-2 gap-3">
           {/* Extra Controls */}
-          {isHost && (
-            <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-3">
+          <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-3">
+            {isHost && (
+              <>
+                <button 
+                  onClick={onToggleShuffle}
+                  className={`transition-colors ${isShuffle ? "text-rpg-accent" : "text-rpg-light/50 hover:text-rpg-light"}`}
+                  title="Aleatorio"
+                >
+                  <Shuffle size={16} />
+                </button>
+                <button 
+                  onClick={onToggleRepeat}
+                  className={`transition-colors ${repeatMode !== 'off' ? "text-rpg-accent" : "text-rpg-light/50 hover:text-rpg-light"}`}
+                  title={`Repetir: ${repeatMode === 'one' ? 'Una' : repeatMode === 'all' ? 'Todas' : 'No'}`}
+                >
+                  {repeatMode === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
+                </button>
+              </>
+            )}
+            {onToggleQueue && (
               <button 
-                onClick={onToggleShuffle}
-                className={`transition-colors ${isShuffle ? "text-rpg-accent" : "text-rpg-light/50 hover:text-rpg-light"}`}
-                title="Aleatorio"
+                onClick={onToggleQueue}
+                className="text-rpg-light/50 hover:text-rpg-accent transition-colors"
+                title="Ver Cola de Reproducción"
               >
-                <Shuffle size={16} />
+                <ListMusic size={16} />
               </button>
-              <button 
-                onClick={onToggleRepeat}
-                className={`transition-colors ${repeatMode !== 'off' ? "text-rpg-accent" : "text-rpg-light/50 hover:text-rpg-light"}`}
-                title={`Repetir: ${repeatMode === 'one' ? 'Una' : repeatMode === 'all' ? 'Todas' : 'No'}`}
-              >
-                {repeatMode === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
-              </button>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="flex items-center gap-2 bg-black/20 px-2 py-1 rounded-full border border-white/5">
             {volume === 0 ? <VolumeX size={14} className="text-rpg-light/50" /> : <Volume2 size={14} className="text-rpg-light/70" />}
