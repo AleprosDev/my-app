@@ -8,12 +8,13 @@ type SongListProps = {
   favorites?: Song[]
   onSongClick?: (song: Song) => void
   onToggleFavorite?: (song: Song) => void
+  onAddToQueue?: (song: Song) => void
   currentSong?: Song | null
   isPlaying?: boolean
   isLoading?: boolean
 }
 
-const SongList: React.FC<SongListProps> = ({ songs, favorites = [], onSongClick, onToggleFavorite, currentSong, isPlaying, isLoading }) => {
+const SongList: React.FC<SongListProps> = ({ songs, favorites = [], onSongClick, onToggleFavorite, onAddToQueue, currentSong, isPlaying, isLoading }) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
@@ -38,6 +39,7 @@ const SongList: React.FC<SongListProps> = ({ songs, favorites = [], onSongClick,
           song={song}
           onClick={() => onSongClick?.(song)}
           onToggleFavorite={onToggleFavorite}
+          onAddToQueue={onAddToQueue}
           isActive={currentSong?.id === song.id}
           isPlaying={isPlaying && currentSong?.id === song.id}
           isFavorite={favorites.some(f => f.id === song.id)}

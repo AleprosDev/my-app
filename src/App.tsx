@@ -29,6 +29,9 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [isSoundboardOpen, setIsSoundboardOpen] = useState(false)
   
+  // Queue State
+  const [queue, setQueue] = useState<Song[]>([])
+
   // Playback State
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off')
   const [isShuffle, setIsShuffle] = useState(false)
@@ -225,6 +228,12 @@ function App() {
       }
     })
   }, [])
+
+  // Add to Queue
+  const addToQueue = useCallback((song: Song) => {
+    setQueue(prev => [...prev, song])
+    addToast(`Añadida a la cola: ${song.title}`, "success")
+  }, [addToast])
 
   // Sincronización con Supabase
   const onSyncEvent = useCallback((event: SyncEvent) => {
@@ -494,6 +503,15 @@ function App() {
 
   const handleNext = useCallback(() => {
     if (!selectedSong) return;
+
+    // 1. Check Queue
+    if (queue.length > 0) {
+      const nextSong = queue[0];
+      setQueue(prev => prev.slice(1)); // Remove from queue
+      handleSongClick(nextSong);
+      return;
+    }
+
     const playlist = getCurrentPlaylist();
     if (playlist.length === 0) return;
 
@@ -525,7 +543,7 @@ function App() {
     if (nextIndex !== -1 && playlist[nextIndex]) {
       handleSongClick(playlist[nextIndex]);
     }
-  }, [selectedSong, getCurrentPlaylist, isShuffle, repeatMode, songs, favorites]); // handleSongClick es estable? No, depende de isHost.
+  }, [selectedSong, getCurrentPlaylist, isShuffle, repeatMode, songs, favorites, queue]); // handleSongClick es estable? No, depende de isHost.
 
   const handlePrev = useCallback(() => {
     if (!selectedSong) return;
@@ -640,6 +658,7 @@ function App() {
           favorites={favorites} 
           toggleFavorite={toggleFavorite} 
           onSongClick={handleSongClick}
+          onAddToQueue={addToQueue}
           currentSong={selectedSong}
           isPlaying={isPlaying}
           isLoading={isLoading}

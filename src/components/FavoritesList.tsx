@@ -6,11 +6,12 @@ type FavoritesListProps = {
   songs: Song[]
   onToggleFavorite?: (song: Song) => void
   onSongClick?: (song: Song) => void
+  onAddToQueue?: (song: Song) => void
   currentSong?: Song | null
   isPlaying?: boolean
 }
 
-const FavoritesList: React.FC<FavoritesListProps> = ({ songs, onToggleFavorite, onSongClick, currentSong, isPlaying }) => {
+const FavoritesList: React.FC<FavoritesListProps> = ({ songs, onToggleFavorite, onSongClick, onAddToQueue, currentSong, isPlaying }) => {
   const bgImage = "/backgrounds/favorites.jpg"
 
   return (
@@ -37,6 +38,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ songs, onToggleFavorite, 
         favorites={songs}
         onToggleFavorite={onToggleFavorite} 
         onSongClick={onSongClick} 
+        onAddToQueue={onAddToQueue}
         currentSong={currentSong}
         isPlaying={isPlaying}
       />

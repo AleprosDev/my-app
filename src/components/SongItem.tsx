@@ -1,17 +1,18 @@
 import type React from "react"
-import { Star } from "lucide-react"
+import { Star, ListPlus } from "lucide-react"
 import type { Song } from "../types"
 
 type SongItemProps = {
   song: Song
   onClick?: () => void
   onToggleFavorite?: (song: Song) => void
+  onAddToQueue?: (song: Song) => void
   isActive?: boolean
   isPlaying?: boolean
   isFavorite?: boolean
 }
 
-const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, isActive, isPlaying, isFavorite = false }) => {
+const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, onAddToQueue, isActive, isPlaying, isFavorite = false }) => {
   return (
     <div 
       className={`
@@ -68,19 +69,31 @@ const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, is
       <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/10">
         <span className="text-xs text-rpg-light/50 font-mono">{song.duration}</span>
         
-        {onToggleFavorite && (
-          <button
-            className={`p-2 rounded-full transition-all border ${
-              isFavorite 
-                ? "bg-rpg-accent text-rpg-dark border-rpg-accent hover:bg-rpg-light" 
-                : "bg-black/30 text-rpg-light/50 border-white/10 hover:text-rpg-accent hover:border-rpg-accent"
-            }`}
-            onClick={e => { e.stopPropagation(); onToggleFavorite(song); }}
-            title={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
-          >
-            <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
-          </button>
-        )}
+        <div className="flex gap-2">
+          {onAddToQueue && (
+            <button
+              className="p-2 rounded-full transition-all border bg-black/30 text-rpg-light/50 border-white/10 hover:text-rpg-accent hover:border-rpg-accent"
+              onClick={e => { e.stopPropagation(); onAddToQueue(song); }}
+              title="Agregar a la cola"
+            >
+              <ListPlus size={16} />
+            </button>
+          )}
+          
+          {onToggleFavorite && (
+            <button
+              className={`p-2 rounded-full transition-all border ${
+                isFavorite 
+                  ? "bg-rpg-accent text-rpg-dark border-rpg-accent hover:bg-rpg-light" 
+                  : "bg-black/30 text-rpg-light/50 border-white/10 hover:text-rpg-accent hover:border-rpg-accent"
+              }`}
+              onClick={e => { e.stopPropagation(); onToggleFavorite(song); }}
+              title={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
+            >
+              <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
