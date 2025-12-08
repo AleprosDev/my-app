@@ -12,8 +12,9 @@ const SongRoutes: React.FC<{
   toggleFavorite: (song: Song) => void, 
   onSongClick?: (song: Song) => void,
   currentSong?: Song | null,
-  isPlaying?: boolean
-}> = ({ songs, favorites, toggleFavorite, onSongClick, currentSong, isPlaying }) => {
+  isPlaying?: boolean,
+  isLoading?: boolean
+}> = ({ songs, favorites, toggleFavorite, onSongClick, currentSong, isPlaying, isLoading }) => {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -29,7 +30,7 @@ const SongRoutes: React.FC<{
       <Routes>
         <Route path="/" element={<div className="text-rpg-light text-center">Cargando...</div>} />
         <Route path="/song/:id" element={<SongDetail songs={songs} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} />} />
-        <Route path="/category/:id" element={<CategoryList songs={songs} favorites={favorites} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} currentSong={currentSong} isPlaying={isPlaying} />} />
+        <Route path="/category/:id" element={<CategoryList songs={songs} favorites={favorites} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} currentSong={currentSong} isPlaying={isPlaying} isLoading={isLoading} />} />
         <Route path="/favoritos" element={<FavoritesList songs={favorites} onToggleFavorite={toggleFavorite} onSongClick={onSongClick} currentSong={currentSong} isPlaying={isPlaying} />} />
       </Routes>
     </div>

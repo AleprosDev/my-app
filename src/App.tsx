@@ -13,11 +13,14 @@ import Soundboard, { useSoundEffects, SfxItem } from "./components/Soundboard"
 import { useAmbience, AmbienceTrack } from "./lib/useAmbience"
 import "../app/globals.css"
 import FeedbackForm from "./components/FeedbackForm"
+import { useToast } from "./components/ui/Toast"
 
 const DEFAULT_ROOM = "sala1"
 
 function App() {
+  const { addToast } = useToast()
   const [songs, setSongs] = useState<Song[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [sfxList, setSfxList] = useState<SfxItem[]>([])
   const [ambienceList, setAmbienceList] = useState<AmbienceTrack[]>([])
   const [activeTab, setActiveTab] = useState("medieval")
@@ -101,6 +104,7 @@ function App() {
   // Cargar canciones desde Supabase
   useEffect(() => {
     const fetchSongs = async () => {
+      setIsLoading(true)
       const { data, error } = await supabase.from("songs").select("*")
       console.log("Supabase data:", data, "error:", error)
       if (!error && data) {
@@ -136,6 +140,7 @@ function App() {
         })
         setSongs(formattedData)
       }
+      setIsLoading(false)
     }
     fetchSongs()
   }, [])
@@ -279,6 +284,15 @@ function App() {
       progress: currentTimeRef.current
     } : undefined
   })
+
+  // Notificaciones de estado de conexión
+  useEffect(() => {
+    if (connectionStatus === 'ERROR') {
+      addToast("Error de conexión con la sala", "error")
+    } else if (connectionStatus === 'DISCONNECTED' && connectionMode !== 'spectator') {
+      addToast("Desconectado de la sala", "warning")
+    }
+  }, [connectionStatus, connectionMode, addToast])
 
   // Sincronización inicial al entrar (si soy oyente y hay un host activo)
   useEffect(() => {
@@ -501,6 +515,7 @@ function App() {
           onSongClick={handleSongClick}
           currentSong={selectedSong}
           isPlaying={isPlaying}
+          isLoading={isLoading}
         />
       </main>
 

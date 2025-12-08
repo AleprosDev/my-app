@@ -1,5 +1,7 @@
 import React, { useState } from "react"
 import { RoomUser } from "../lib/useSyncRoom"
+import { useToast } from "./ui/Toast"
+import { X } from "lucide-react"
 
 interface RoomProps {
   roomId: string
@@ -27,6 +29,10 @@ const Room: React.FC<RoomProps> = ({
   setUserName
 }) => {
   const [input, setInput] = useState(roomId)
+  const { addToast } = useToast()
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordInput, setPasswordInput] = useState("")
+
   const isHost = connectionMode === "host"
   const isListener = connectionMode === "listener"
   const isSpectator = connectionMode === "spectator"
@@ -39,23 +45,56 @@ const Room: React.FC<RoomProps> = ({
     setRoomId(input)
     // Al cambiar de sala, volvemos a espectador por defecto
     setConnectionMode("spectator")
+    addToast(`Te has unido a la sala: ${input}`, "info")
   }
 
   const handleClaimHost = () => {
     if (activeHost && activeHost.name !== userName) {
-      alert("Ya hay un Dungeon Master en esta sala.")
+      addToast("Ya hay un Dungeon Master en esta sala.", "error")
       return
     }
-    const password = prompt("Introduce la clave de Dungeon Master:")
-    if (password === "admin") {
+    setShowPasswordModal(true)
+  }
+
+  const submitPassword = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (passwordInput === "admin") {
       setConnectionMode("host")
+      addToast("¡Ahora eres el Dungeon Master!", "success")
+      setShowPasswordModal(false)
     } else {
-      alert("Clave incorrecta")
+      addToast("Clave incorrecta", "error")
     }
+    setPasswordInput("")
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4 bg-rpg-dark rounded shadow-md border-2 border-rpg-accent">
+    <div className="flex flex-col items-center gap-4 p-4 bg-rpg-dark rounded shadow-md border-2 border-rpg-accent relative">
+      {/* Modal de Password */}
+      {showPasswordModal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded">
+          <form onSubmit={submitPassword} className="bg-rpg-dark border border-rpg-primary p-4 rounded shadow-xl w-64">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-rpg-primary font-bold">Clave de DM</h3>
+              <button type="button" onClick={() => setShowPasswordModal(false)} className="text-rpg-light hover:text-white">
+                <X size={16} />
+              </button>
+            </div>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={e => setPasswordInput(e.target.value)}
+              placeholder="Contraseña..."
+              className="w-full bg-rpg-secondary/30 border border-rpg-light/20 rounded px-2 py-1 text-white mb-3 focus:border-rpg-primary outline-none"
+              autoFocus
+            />
+            <button type="submit" className="w-full bg-rpg-primary text-rpg-dark font-bold py-1 rounded hover:bg-rpg-light transition">
+              Acceder
+            </button>
+          </form>
+        </div>
+      )}
+
       <form onSubmit={handleJoin} className="flex gap-2 items-center flex-wrap justify-center">
         <label className="font-semibold text-rpg-light">Room ID:</label>
         <input
@@ -79,7 +118,7 @@ const Room: React.FC<RoomProps> = ({
         onClick={() => {
           const url = `${window.location.origin}/?room=${roomId}`
           navigator.clipboard.writeText(url)
-          alert("Link copiado al portapapeles: " + url)
+          addToast("Link copiado al portapapeles", "success")
         }}
         className="text-xs bg-rpg-secondary text-white hover:bg-rpg-primary hover:text-rpg-dark px-2 py-1 rounded border border-rpg-light/20 transition"
       >
@@ -96,7 +135,10 @@ const Room: React.FC<RoomProps> = ({
         {/* Botones de cambio de modo */}
         {isSpectator && (
           <button 
-            onClick={() => setConnectionMode("listener")}
+            onClick={() => {
+              setConnectionMode("listener")
+              addToast("Sincronizado con la sesión", "success")
+            }}
             className="text-xs bg-rpg-secondary text-white px-2 py-1 rounded hover:bg-rpg-primary hover:text-rpg-dark transition font-bold border border-rpg-light/20"
             title="Sincronizarse con lo que escucha el DM"
           >
@@ -106,7 +148,10 @@ const Room: React.FC<RoomProps> = ({
 
         {isListener && (
           <button 
-            onClick={() => setConnectionMode("spectator")}
+            onClick={() => {
+              setConnectionMode("spectator")
+              addToast("Modo local activado", "info")
+            }}
             className="text-xs bg-rpg-dark text-rpg-light px-2 py-1 rounded hover:bg-rpg-secondary transition border border-rpg-light/20"
             title="Escuchar música por mi cuenta"
           >
@@ -129,7 +174,10 @@ const Room: React.FC<RoomProps> = ({
         
         {isHost && (
           <button 
-            onClick={() => setConnectionMode("spectator")}
+            onClick={() => {
+              setConnectionMode("spectator")
+              addToast("Has dejado de ser DM", "info")
+            }}
             className="text-xs text-rpg-light/60 hover:text-red-400 hover:underline ml-2 transition-colors"
           >
             Dejar puesto

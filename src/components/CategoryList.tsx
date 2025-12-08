@@ -10,8 +10,9 @@ const CategoryList: React.FC<{
   onToggleFavorite?: (song: Song) => void, 
   onSongClick?: (song: Song) => void,
   currentSong?: Song | null,
-  isPlaying?: boolean
-}> = ({ songs, favorites, onToggleFavorite, onSongClick, currentSong, isPlaying }) => {
+  isPlaying?: boolean,
+  isLoading?: boolean
+}> = ({ songs, favorites, onToggleFavorite, onSongClick, currentSong, isPlaying, isLoading }) => {
   const { id } = useParams<{ id: string }>()
   // Filtra por género (no por category_id)
   const filtered = songs.filter(s => s.genre && s.genre.toLowerCase() === id?.toLowerCase())
@@ -44,9 +45,10 @@ const CategoryList: React.FC<{
         onSongClick={onSongClick} 
         currentSong={currentSong}
         isPlaying={isPlaying}
+        isLoading={isLoading}
       />
       
-      {filtered.length === 0 && (
+      {!isLoading && filtered.length === 0 && (
         <div className="text-center py-12 text-rpg-light/50 italic">
           No hay canciones disponibles para este género aún.
         </div>
