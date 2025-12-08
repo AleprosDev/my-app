@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react"
-import { Play, Pause, Volume2, VolumeX, ChevronDown } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, ChevronDown, SkipBack, SkipForward, Repeat, Repeat1, Shuffle } from "lucide-react"
 
 type PlayerProps = {
   song: {
@@ -15,6 +15,13 @@ type PlayerProps = {
   onTimeUpdate?: (currentTime: number) => void
   onPlay?: () => void
   onPause?: () => void
+  onNext?: () => void
+  onPrev?: () => void
+  onEnded?: () => void
+  repeatMode?: 'off' | 'all' | 'one'
+  isShuffle?: boolean
+  onToggleRepeat?: () => void
+  onToggleShuffle?: () => void
   isHost?: boolean
 }
 
@@ -31,6 +38,13 @@ const Player: React.FC<PlayerProps> = ({
   onTimeUpdate,
   onPlay,
   onPause,
+  onNext,
+  onPrev,
+  onEnded,
+  repeatMode = 'off',
+  isShuffle = false,
+  onToggleRepeat,
+  onToggleShuffle,
   isHost = false,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -374,18 +388,36 @@ const Player: React.FC<PlayerProps> = ({
         )}
       </div>
       
-      {/* Play/Pause Button (Host Only) */}
+      {/* Controls Group (Host Only) */}
       {isHost && (
-        <button
-          onClick={isPlaying ? onPause : onPlay}
-          className={`
-            p-3 rounded-full bg-rpg-accent text-rpg-dark hover:bg-white transition-all shadow-[0_0_15px_rgba(212,255,95,0.5)] flex-shrink-0 border-2 border-white/20 z-20
-            ${isPlaying ? 'animate-pulse-slow' : ''}
-          `}
-          title={isPlaying ? "Pausar" : "Reproducir"}
-        >
-          {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-0" />}
-        </button>
+        <div className="flex items-center gap-2 z-20">
+          <button 
+            onClick={onPrev}
+            className="text-rpg-light/70 hover:text-white hover:scale-110 transition-all p-1"
+            title="Anterior"
+          >
+            <SkipBack size={20} />
+          </button>
+
+          <button
+            onClick={isPlaying ? onPause : onPlay}
+            className={`
+              p-3 rounded-full bg-rpg-accent text-rpg-dark hover:bg-white transition-all shadow-[0_0_15px_rgba(212,255,95,0.5)] flex-shrink-0 border-2 border-white/20
+              ${isPlaying ? 'animate-pulse-slow' : ''}
+            `}
+            title={isPlaying ? "Pausar" : "Reproducir"}
+          >
+            {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-0" />}
+          </button>
+
+          <button 
+            onClick={onNext}
+            className="text-rpg-light/70 hover:text-white hover:scale-110 transition-all p-1"
+            title="Siguiente"
+          >
+            <SkipForward size={20} />
+          </button>
+        </div>
       )}
 
       <div className="flex-1 min-w-0 relative z-10">
@@ -433,10 +465,30 @@ const Player: React.FC<PlayerProps> = ({
           onCanPlayThrough={handleCanPlayThrough}
           onLoadStart={handleLoadStart}
           onError={handleAudioError}
-          loop
+          onEnded={onEnded}
         />
         
         <div className="flex items-center mt-2 gap-3">
+          {/* Extra Controls */}
+          {isHost && (
+            <div className="flex items-center gap-2 mr-2 border-r border-white/10 pr-3">
+              <button 
+                onClick={onToggleShuffle}
+                className={`transition-colors ${isShuffle ? "text-rpg-accent" : "text-rpg-light/50 hover:text-rpg-light"}`}
+                title="Aleatorio"
+              >
+                <Shuffle size={16} />
+              </button>
+              <button 
+                onClick={onToggleRepeat}
+                className={`transition-colors ${repeatMode !== 'off' ? "text-rpg-accent" : "text-rpg-light/50 hover:text-rpg-light"}`}
+                title={`Repetir: ${repeatMode === 'one' ? 'Una' : repeatMode === 'all' ? 'Todas' : 'No'}`}
+              >
+                {repeatMode === 'one' ? <Repeat1 size={16} /> : <Repeat size={16} />}
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 bg-black/20 px-2 py-1 rounded-full border border-white/5">
             {volume === 0 ? <VolumeX size={14} className="text-rpg-light/50" /> : <Volume2 size={14} className="text-rpg-light/70" />}
             <input

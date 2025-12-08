@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom"
 import Navbar from "./components/Navbar"
 import Room from "./components/Room"
 import Player from "./components/Player"
@@ -28,6 +28,10 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [isSoundboardOpen, setIsSoundboardOpen] = useState(false)
+  
+  // Playback State
+  const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off')
+  const [isShuffle, setIsShuffle] = useState(false)
   
   // Estado de ambiente (Lifted state)
   const [ambienceState, setAmbienceState] = useState<Record<string, { isPlaying: boolean, volume: number, loop: boolean }>>({})
@@ -462,6 +466,7 @@ function App() {
   }, [isHost, selectedSong, songs])
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Handler para navegar a la ruta de género
   const handleGenreClick = (genre: string) => {
@@ -473,6 +478,128 @@ function App() {
   const handleFavoritesClick = () => {
     navigate("/favoritos");
   };
+
+  // Helper para obtener la playlist actual basada en la ruta
+  const getCurrentPlaylist = useCallback(() => {
+    if (location.pathname === '/favoritos') {
+      return favorites;
+    }
+    if (location.pathname.startsWith('/category/')) {
+      const genre = location.pathname.split('/category/')[1];
+      return songs.filter(s => s.genre && s.genre.toLowerCase() === genre.toLowerCase());
+    }
+    // Fallback: si estamos en otra ruta, usar todas las canciones o la lista actual si ya hay una seleccionada
+    return songs;
+  }, [location.pathname, favorites, songs]);
+
+  const handleNext = useCallback(() => {
+    if (!selectedSong) return;
+    const playlist = getCurrentPlaylist();
+    if (playlist.length === 0) return;
+
+    const currentIndex = playlist.findIndex(s => s.id === selectedSong.id);
+    let nextIndex = -1;
+
+    if (isShuffle) {
+      // Random index
+      if (playlist.length > 1) {
+        do {
+          nextIndex = Math.floor(Math.random() * playlist.length);
+        } while (nextIndex === currentIndex);
+      } else {
+        nextIndex = 0;
+      }
+    } else {
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= playlist.length) {
+        if (repeatMode === 'all') {
+          nextIndex = 0;
+        } else {
+          // Fin de la lista
+          setIsPlaying(false);
+          return; 
+        }
+      }
+    }
+
+    if (nextIndex !== -1 && playlist[nextIndex]) {
+      handleSongClick(playlist[nextIndex]);
+    }
+  }, [selectedSong, getCurrentPlaylist, isShuffle, repeatMode, songs, favorites]); // handleSongClick es estable? No, depende de isHost.
+
+  const handlePrev = useCallback(() => {
+    if (!selectedSong) return;
+    const playlist = getCurrentPlaylist();
+    if (playlist.length === 0) return;
+
+    // Si llevamos más de 3 segundos, reiniciar canción
+    if (currentTimeRef.current > 3) {
+      setProgress(0);
+      currentTimeRef.current = 0;
+      if (isHost) {
+         sendSyncEvent({
+          action: "seek",
+          songId: String(selectedSong.id),
+          currentTime: 0,
+          timestamp: Date.now(),
+        })
+      }
+      return;
+    }
+
+    const currentIndex = playlist.findIndex(s => s.id === selectedSong.id);
+    let prevIndex = -1;
+
+    if (isShuffle) {
+       if (playlist.length > 1) {
+        do {
+          prevIndex = Math.floor(Math.random() * playlist.length);
+        } while (prevIndex === currentIndex);
+      } else {
+        prevIndex = 0;
+      }
+    } else {
+      prevIndex = currentIndex - 1;
+      if (prevIndex < 0) {
+        if (repeatMode === 'all') {
+          prevIndex = playlist.length - 1;
+        } else {
+          prevIndex = 0; 
+        }
+      }
+    }
+
+    if (prevIndex !== -1 && playlist[prevIndex]) {
+      handleSongClick(playlist[prevIndex]);
+    }
+  }, [selectedSong, getCurrentPlaylist, isShuffle, repeatMode, isHost, sendSyncEvent]);
+
+  const handleSongEnded = useCallback(() => {
+    if (repeatMode === 'one') {
+      // Repetir canción actual
+      setProgress(0);
+      currentTimeRef.current = 0;
+      // Forzar play localmente
+      setIsPlaying(true);
+      if (isHost && selectedSong) {
+         sendSyncEvent({
+          action: "seek",
+          songId: String(selectedSong.id),
+          currentTime: 0,
+          timestamp: Date.now(),
+        })
+        // También enviar play por si acaso
+        sendSyncEvent({
+          action: "play",
+          songId: String(selectedSong.id),
+          currentTime: 0,
+          timestamp: Date.now(),
+        })
+      }
+    } else {
+      handleNext();
+    }
+  }, [repeatMode, handleNext, isHost, selectedSong, sendSyncEvent]);
 
   return (
     <div className="min-h-screen bg-rpg-dark pb-24">
@@ -563,6 +690,13 @@ function App() {
         onTimeUpdate={handleTimeUpdate}
         onPlay={handlePlay}
         onPause={handlePause}
+        onNext={handleNext}
+        onPrev={handlePrev}
+        onEnded={handleSongEnded}
+        repeatMode={repeatMode}
+        isShuffle={isShuffle}
+        onToggleRepeat={() => setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off')}
+        onToggleShuffle={() => setIsShuffle(prev => !prev)}
         isHost={isHost || isSpectator} // Permitir control si es host O espectador
       />
 
