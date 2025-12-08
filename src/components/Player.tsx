@@ -343,11 +343,19 @@ const Player: React.FC<PlayerProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="absolute -top-6 left-4 md:left-1/2 md:-translate-x-1/2 h-6 w-12 bg-rpg-dark/95 border-t border-x border-rpg-accent/30 rounded-t-lg flex items-center justify-center cursor-pointer hover:bg-rpg-secondary/20 transition-colors"
+        className="absolute -top-6 left-4 md:left-1/2 md:-translate-x-1/2 h-6 min-w-[48px] px-3 bg-rpg-dark/95 border-t border-x border-rpg-accent/30 rounded-t-lg flex items-center justify-center cursor-pointer hover:bg-rpg-secondary/20 transition-colors gap-2"
         title={isCollapsed ? "Expandir reproductor" : "Colapsar reproductor"}
       >
+        {isCollapsed && (
+          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-rpg-accent animate-pulse shadow-[0_0_5px_#d4ff5f]"></span>
+            <span className="text-xs font-bold text-rpg-light truncate max-w-[150px] md:max-w-[250px]">
+              {displaySong.title}
+            </span>
+          </div>
+        )}
         <ChevronDown 
-          size={20} 
+          size={16} 
           className={`text-rpg-accent transition-transform duration-500 ${isCollapsed ? "rotate-180" : ""}`} 
         />
       </button>

@@ -317,11 +317,24 @@ function App() {
     } : undefined
   })
 
+  // Estado de visibilidad de la página para evitar alertas falsas
+  const [isPageVisible, setIsPageVisible] = useState(true)
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(document.visibilityState === 'visible')
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [])
+
   // Notificaciones de estado de conexión
   useEffect(() => {
-    if (connectionStatus === 'ERROR') {
+    // Solo mostrar error si realmente estamos desconectados y la página está visible
+    // Esto evita falsos positivos cuando el usuario cambia de pestaña
+    if (connectionStatus === 'ERROR' && document.visibilityState === 'visible') {
       addToast("Error de conexión con la sala", "error")
-    } else if (connectionStatus === 'DISCONNECTED' && connectionMode !== 'spectator') {
+    } else if (connectionStatus === 'DISCONNECTED' && connectionMode !== 'spectator' && document.visibilityState === 'visible') {
       addToast("Desconectado de la sala", "warning")
     }
   }, [connectionStatus, connectionMode, addToast])
@@ -642,18 +655,18 @@ function App() {
     <div className="min-h-screen bg-rpg-dark pb-24">
       <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} />
       
-      {/* Indicador de estado de conexión */}
-      {connectionStatus === 'ERROR' && (
+      {/* Indicador de estado de conexión - Solo si la página es visible */}
+      {isPageVisible && connectionStatus === 'ERROR' && (
         <div className="bg-red-900/80 text-red-100 text-center py-2 px-4 text-sm font-bold animate-pulse border-b border-red-700 backdrop-blur-sm sticky top-[64px] z-40">
           ⚠️ Error de conexión. Intentando reconectar...
         </div>
       )}
-      {connectionStatus === 'DISCONNECTED' && connectionMode !== 'spectator' && (
+      {isPageVisible && connectionStatus === 'DISCONNECTED' && connectionMode !== 'spectator' && (
         <div className="bg-yellow-900/80 text-yellow-100 text-center py-2 px-4 text-sm font-bold border-b border-yellow-700 backdrop-blur-sm sticky top-[64px] z-40">
           ⚠️ Desconectado de la sala. Revisa tu conexión.
         </div>
       )}
-      {connectionStatus === 'CONNECTING' && connectionMode !== 'spectator' && (
+      {isPageVisible && connectionStatus === 'CONNECTING' && connectionMode !== 'spectator' && (
         <div className="bg-blue-900/80 text-blue-100 text-center py-2 px-4 text-sm font-bold border-b border-blue-700 backdrop-blur-sm sticky top-[64px] z-40">
           🔄 Conectando a la sala...
         </div>
