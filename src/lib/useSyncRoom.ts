@@ -47,6 +47,7 @@ export function useSyncRoom({
 }) {
   const channelRef = useRef<any>(null)
   const [users, setUsers] = useState<RoomUser[]>([])
+  const [connectionStatus, setConnectionStatus] = useState<"CONNECTING" | "SUBSCRIBED" | "ERROR" | "DISCONNECTED">("DISCONNECTED")
 
   // Mantener una referencia actualizada al callback de eventos para evitar closures obsoletos
   const onEventRef = useRef(onEvent)
@@ -83,6 +84,7 @@ export function useSyncRoom({
 
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
+        setConnectionStatus('SUBSCRIBED')
         // Trackear mi presencia inicial
         const presencePayload: RoomUser = {
           id: userId,
@@ -94,6 +96,11 @@ export function useSyncRoom({
           } : undefined
         }
         await channel.track(presencePayload)
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        setConnectionStatus('ERROR')
+        console.error(`Error de conexión en sala (${status}). Intentando reconectar...`)
+      } else if (status === 'CLOSED') {
+        setConnectionStatus('DISCONNECTED')
       }
     })
 
@@ -129,5 +136,5 @@ export function useSyncRoom({
     }
   }
 
-  return { sendSyncEvent, users }
+  return { sendSyncEvent, users, connectionStatus }
 }

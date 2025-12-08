@@ -267,7 +267,7 @@ function App() {
     }
   }, [songs, playSfx, updateAmbience, isSpectator])
 
-  const { sendSyncEvent, users } = useSyncRoom({ 
+  const { sendSyncEvent, users, connectionStatus } = useSyncRoom({ 
     roomId, 
     userId,
     name: userName,
@@ -463,6 +463,24 @@ function App() {
   return (
     <div className="min-h-screen bg-rpg-dark pb-24">
       <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} />
+      
+      {/* Indicador de estado de conexión */}
+      {connectionStatus === 'ERROR' && (
+        <div className="bg-red-900/80 text-red-100 text-center py-2 px-4 text-sm font-bold animate-pulse border-b border-red-700 backdrop-blur-sm sticky top-[64px] z-40">
+          ⚠️ Error de conexión. Intentando reconectar...
+        </div>
+      )}
+      {connectionStatus === 'DISCONNECTED' && connectionMode !== 'spectator' && (
+        <div className="bg-yellow-900/80 text-yellow-100 text-center py-2 px-4 text-sm font-bold border-b border-yellow-700 backdrop-blur-sm sticky top-[64px] z-40">
+          ⚠️ Desconectado de la sala. Revisa tu conexión.
+        </div>
+      )}
+      {connectionStatus === 'CONNECTING' && connectionMode !== 'spectator' && (
+        <div className="bg-blue-900/80 text-blue-100 text-center py-2 px-4 text-sm font-bold border-b border-blue-700 backdrop-blur-sm sticky top-[64px] z-40">
+          🔄 Conectando a la sala...
+        </div>
+      )}
+
       <main className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6 text-rpg-light">Mi Biblioteca Musical</h1>
         {/* Botones de acción */}
