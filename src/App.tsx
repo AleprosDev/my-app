@@ -15,6 +15,7 @@ import "../app/globals.css"
 import FeedbackForm from "./components/FeedbackForm"
 import { useToast } from "./components/ui/Toast"
 import QueueList from "./components/QueueList"
+import { sanitizeInput, isValidRoomId } from "./lib/security"
 
 const DEFAULT_ROOM = "sala1"
 
@@ -55,13 +56,22 @@ function App() {
   // Estado de sala y rol
   const [roomId, setRoomId] = useState(() => {
     const urlRoom = searchParams.get("room")
-    if (urlRoom) return urlRoom
+    // Validar input de URL
+    if (urlRoom && isValidRoomId(urlRoom)) return sanitizeInput(urlRoom)
+    
     const storedRoom = localStorage.getItem("music_room_id")
-    return storedRoom || DEFAULT_ROOM
+    if (storedRoom && isValidRoomId(storedRoom)) return sanitizeInput(storedRoom)
+    
+    return DEFAULT_ROOM
   })
   
   // Persistir roomId y actualizar URL
   useEffect(() => {
+    // Doble check antes de guardar
+    if (!isValidRoomId(roomId)) {
+      setRoomId(DEFAULT_ROOM)
+      return
+    }
     localStorage.setItem("music_room_id", roomId)
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev)
@@ -85,7 +95,10 @@ function App() {
   const isListener = connectionMode === "listener"
   const isSpectator = connectionMode === "spectator"
 
-  const [userName, setUserName] = useState(() => localStorage.getItem("room_user_name") || "")
+  const [userName, setUserName] = useState(() => {
+    const stored = localStorage.getItem("room_user_name")
+    return stored ? sanitizeInput(stored) : ""
+  })
   const [userId] = useState(() => {
     const stored = localStorage.getItem("room_user_id")
     if (stored) return stored
@@ -96,7 +109,7 @@ function App() {
 
   // Guardar nombre
   useEffect(() => {
-    localStorage.setItem("room_user_name", userName)
+    localStorage.setItem("room_user_name", sanitizeInput(userName))
   }, [userName])
 
   // Simulación de favoritas con persistencia local
