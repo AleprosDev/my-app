@@ -7,4 +7,5 @@ export interface Song {
   cover_url?: string
   genre: string
   audio_url: string
+  description?: string
 }

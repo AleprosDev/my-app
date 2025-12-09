@@ -32,13 +32,20 @@ const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, on
           className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}
         />
         
-        {/* Overlay Play Button */}
+        {/* Overlay Play Button & Description */}
         <div className={`
-          absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300
+          absolute inset-0 flex flex-col items-center justify-center bg-black/70 transition-all duration-300 p-4 text-center
           ${isActive || 'opacity-0 group-hover:opacity-100'}
         `}>
+          {/* Description (Only on hover/active if available) */}
+          {song.description && (
+            <p className="text-xs text-white/90 mb-3 line-clamp-3 font-medium animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {song.description}
+            </p>
+          )}
+
           <div className={`
-            w-12 h-12 rounded-full bg-rpg-accent/90 flex items-center justify-center text-rpg-dark shadow-lg backdrop-blur-sm
+            w-12 h-12 rounded-full bg-rpg-accent/90 flex items-center justify-center text-rpg-dark shadow-lg backdrop-blur-sm flex-shrink-0
             ${isActive && isPlaying ? 'animate-pulse' : ''}
           `}>
             {isActive && isPlaying ? (
