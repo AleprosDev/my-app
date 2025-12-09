@@ -47,7 +47,8 @@ export function useSyncRoom({
 }) {
   const channelRef = useRef<any>(null)
   const [users, setUsers] = useState<RoomUser[]>([])
-  const [connectionStatus, setConnectionStatus] = useState<"CONNECTING" | "SUBSCRIBED" | "ERROR" | "DISCONNECTED">("DISCONNECTED")
+  const [connectionStatus, setConnectionStatus] = useState<"CONNECTING" | "SUBSCRIBED" | "ERROR" | "DISCONNECTED">("CONNECTING")
+  const [retryCount, setRetryCount] = useState(0)
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Mantener una referencia actualizada al callback de eventos para evitar closures obsoletos
@@ -57,6 +58,8 @@ export function useSyncRoom({
   }, [onEvent])
 
   useEffect(() => {
+    setConnectionStatus('CONNECTING')
+
     // Unirse al canal único de la sala (broadcast + presence)
     const channel = supabase.channel(`room:${roomId}`, {
       config: { 
@@ -108,6 +111,12 @@ export function useSyncRoom({
         console.warn(`Problema de conexión (${status}). Esperando recuperación...`)
         errorTimeoutRef.current = setTimeout(() => {
           setConnectionStatus('ERROR')
+          
+          // Auto-recuperación: Si seguimos online, forzar reinicio del canal
+          if (navigator.onLine) {
+            console.log("Forzando reinicio del canal...")
+            setRetryCount(prev => prev + 1)
+          }
         }, 5000) // 5 segundos de tolerancia
       } else if (status === 'CLOSED') {
         setConnectionStatus('DISCONNECTED')
@@ -118,7 +127,7 @@ export function useSyncRoom({
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
       channel.unsubscribe()
     }
-  }, [roomId, userId]) // Reiniciar solo si cambia la sala o el usuario
+  }, [roomId, userId, retryCount]) // Reiniciar si cambia la sala, usuario o forzamos retry
 
   // Actualizar presencia cuando cambian mis datos (rol, nombre, o estado del host)
   useEffect(() => {
