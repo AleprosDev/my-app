@@ -48,6 +48,7 @@ export function useSyncRoom({
   const channelRef = useRef<any>(null)
   const [users, setUsers] = useState<RoomUser[]>([])
   const [connectionStatus, setConnectionStatus] = useState<"CONNECTING" | "SUBSCRIBED" | "ERROR" | "DISCONNECTED">("DISCONNECTED")
+  const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Mantener una referencia actualizada al callback de eventos para evitar closures obsoletos
   const onEventRef = useRef(onEvent)
@@ -83,6 +84,12 @@ export function useSyncRoom({
     })
 
     channel.subscribe(async (status) => {
+      // Limpiar timeout de error si existe, ya que hemos recibido un nuevo estado
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current)
+        errorTimeoutRef.current = null
+      }
+
       if (status === 'SUBSCRIBED') {
         setConnectionStatus('SUBSCRIBED')
         // Trackear mi presencia inicial
@@ -97,14 +104,18 @@ export function useSyncRoom({
         }
         await channel.track(presencePayload)
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        setConnectionStatus('ERROR')
-        console.error(`Error de conexión en sala (${status}). Intentando reconectar...`)
+        // No mostrar error inmediatamente, dar un margen de gracia para reconexión automática
+        console.warn(`Problema de conexión (${status}). Esperando recuperación...`)
+        errorTimeoutRef.current = setTimeout(() => {
+          setConnectionStatus('ERROR')
+        }, 5000) // 5 segundos de tolerancia
       } else if (status === 'CLOSED') {
         setConnectionStatus('DISCONNECTED')
       }
     })
 
     return () => {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
       channel.unsubscribe()
     }
   }, [roomId, userId]) // Reiniciar solo si cambia la sala o el usuario
