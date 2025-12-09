@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-rpg-dark text-rpg-light font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-wide;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-rpg-accent text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-rpg-accent-hover active:scale-95 shadow-lg shadow-rpg-accent/20;
+  }
+  
+  .btn-secondary {
+    @apply bg-rpg-secondary text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-rpg-secondary-hover active:scale-95 shadow-lg shadow-rpg-secondary/20;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-rpg-light hover:bg-white/10 px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  .card-glass {
+    @apply bg-rpg-card/80 backdrop-blur-md border border-white/5 shadow-xl;
+  }
+}

@@ -664,9 +664,16 @@ function App() {
     }
   }, [repeatMode, handleNext, isHost, selectedSong, sendSyncEvent]);
 
+  const tabs = [
+    { id: "medieval", name: "Medieval" },
+    { id: "scifi", name: "Sci-Fi" },
+    { id: "modern", name: "Modern" },
+    { id: "horror", name: "Horror" },
+  ]
+
   return (
-    <div className="min-h-screen bg-rpg-dark pb-24">
-      <Navbar activeTab={activeTab} setActiveTab={handleGenreClick} />
+    <div className="min-h-screen bg-rpg-dark pb-24 font-sans text-rpg-light selection:bg-rpg-accent selection:text-rpg-dark">
+      <Navbar />
       
       {/* Indicador de estado de conexión - Solo si la página es visible */}
       {isPageVisible && connectionStatus === 'ERROR' && (
@@ -685,18 +692,45 @@ function App() {
         </div>
       )}
 
-      <main className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6 text-rpg-light">Mi Biblioteca Musical</h1>
-        {/* Botones de acción */}
-        <div className="flex gap-2 mb-6">
-          {/* Botón de favoritos */}
-          <button
-            className="px-3 py-1 rounded bg-rpg-light text-black hover:bg-rpg-accent hover:text-rpg-dark transition font-bold border border-rpg-light/20"
-            onClick={handleFavoritesClick}
-          >
-            ★ Favoritos
-          </button>
+      <main className="container mx-auto py-8 px-4 pb-40">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white tracking-tight mb-2 font-display">
+              Mi Biblioteca Musical
+            </h1>
+            <p className="text-rpg-muted">Explora paisajes sonoros para tus aventuras</p>
+          </div>
+          
+          {/* Botones de acción */}
+          <div className="flex gap-3">
+            <button
+              className="px-4 py-2 rounded-full bg-rpg-card hover:bg-rpg-card-hover text-rpg-light border border-white/10 transition-all flex items-center gap-2 font-medium shadow-sm hover:shadow-md hover:border-rpg-accent/50"
+              onClick={handleFavoritesClick}
+            >
+              <span className="text-yellow-400">★</span> Favoritos
+            </button>
+          </div>
         </div>
+
+        {/* Navegación de Géneros (Chips) */}
+        <div className="flex overflow-x-auto pb-4 mb-8 gap-3 no-scrollbar mask-linear-fade">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleGenreClick(tab.id)}
+              className={`
+                px-6 py-2.5 rounded-full font-medium text-sm whitespace-nowrap transition-all duration-300 border
+                ${activeTab === tab.id 
+                  ? "bg-rpg-accent text-rpg-dark border-rpg-accent shadow-[0_0_15px_rgba(57,255,20,0.4)] scale-105" 
+                  : "bg-rpg-card text-rpg-muted border-white/5 hover:border-white/20 hover:text-white hover:bg-rpg-card-hover"
+                }
+              `}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+
         {/* Rutas principales de canciones */}
         <SongRoutes 
           songs={songs} 
