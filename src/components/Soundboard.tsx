@@ -41,7 +41,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 type SoundboardProps = {
   isHost: boolean
-  onPlaySfx: (sfxId: string) => void
+  onPlaySfx: (sfxId: string, volume: number) => void
   sounds: SfxItem[]
   ambienceTracks: AmbienceTrack[]
   onAmbienceChange: (id: string, isPlaying: boolean, volume: number, loop: boolean) => void
@@ -168,7 +168,7 @@ const Soundboard: React.FC<SoundboardProps> = ({ isHost, onPlaySfx, sounds, ambi
                   return (
                     <button
                       key={sfx.id}
-                      onClick={() => onPlaySfx(sfx.id)}
+                      onClick={() => onPlaySfx(sfx.id, sfxVolume / 100)}
                       className="flex flex-col items-center justify-center p-3 rounded-lg bg-rpg-secondary/30 border border-rpg-light/20 hover:bg-rpg-primary hover:text-rpg-dark hover:border-rpg-light transition-all active:scale-95 group animate-in fade-in zoom-in duration-300 cursor-pointer"
                     >
                       <Icon size={24} className="mb-2 text-rpg-primary group-hover:text-rpg-dark transition-colors" />

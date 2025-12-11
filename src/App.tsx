@@ -272,7 +272,7 @@ function App() {
     if (isSpectator) return // Espectadores no reaccionan a eventos de sincronización
 
     if (event.action === "play_sfx" && event.sfxId) {
-      playSfx(event.sfxId)
+      playSfx(event.sfxId, event.volume)
     } else if (event.action === "ambience_update" && event.ambienceId) {
       // Usar ref para obtener estado actual sin re-renderizar el callback
       const currentLocal = ambienceStateRef.current[event.ambienceId]
@@ -439,10 +439,10 @@ function App() {
   }
 
   // Handler para SFX (Host y Spectator)
-  const handlePlaySfx = (sfxId: string) => {
+  const handlePlaySfx = (sfxId: string, volume: number = 0.5) => {
     if (isListener) return // Listeners no lanzan SFX
     // Reproducir localmente
-    playSfx(sfxId)
+    playSfx(sfxId, volume)
     // Enviar evento a la sala solo si es Host
     if (isHost) {
       sendSyncEvent({
@@ -450,7 +450,8 @@ function App() {
         songId: "sfx", // Dummy ID
         currentTime: 0,
         timestamp: Date.now(),
-        sfxId: sfxId
+        sfxId: sfxId,
+        volume: volume
       })
     }
   }

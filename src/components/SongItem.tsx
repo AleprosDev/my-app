@@ -102,7 +102,7 @@ const SongItem: React.FC<SongItemProps> = ({ song, onClick, onToggleFavorite, on
         <div className="flex gap-2">
           {onAddToQueue && (
             <button
-              className="p-2.5 rounded-full transition-all bg-white/5 text-rpg-muted hover:bg-rpg-secondary hover:text-white hover:shadow-lg hover:shadow-rpg-secondary/20 active:scale-95"
+              className="p-2.5 rounded-full transition-all bg-white/5 text-rpg-muted hover:bg-rpg-accent hover:text-rpg-dark hover:shadow-lg hover:shadow-rpg-accent/20 active:scale-95"
               onClick={e => { e.stopPropagation(); onAddToQueue(song); }}
               title="Agregar a la cola"
             >
