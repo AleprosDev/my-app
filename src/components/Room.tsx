@@ -78,7 +78,7 @@ const Room: React.FC<RoomProps> = ({
       {!isExpanded && (
         <button
           onClick={() => setIsExpanded(true)}
-          className="fixed bottom-24 right-4 z-40 bg-rpg-card border border-rpg-accent text-rpg-accent p-3 rounded-full shadow-lg hover:bg-rpg-accent hover:text-rpg-dark transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+          className="fixed top-40 right-4 z-40 bg-rpg-card border border-rpg-accent text-rpg-accent p-3 rounded-full shadow-lg hover:bg-rpg-accent hover:text-rpg-dark transition-all duration-300 animate-in fade-in slide-in-from-top-4"
         >
           <Users size={24} />
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white font-bold">
@@ -89,8 +89,8 @@ const Room: React.FC<RoomProps> = ({
 
       {/* Main Panel */}
       <div className={`
-        fixed bottom-24 right-4 z-40 w-80 bg-rpg-card/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-all duration-300 flex flex-col overflow-hidden
-        ${isExpanded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-95 pointer-events-none'}
+        fixed top-40 right-4 z-40 w-80 bg-rpg-card/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl transition-all duration-300 flex flex-col overflow-hidden
+        ${isExpanded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-10 scale-95 pointer-events-none'}
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-white/5 border-b border-white/5">
